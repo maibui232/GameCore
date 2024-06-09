@@ -18,11 +18,13 @@ namespace GameCore.Utils.UIElement
         Up
     }
 
+    [RequireComponent(typeof(CanvasGroup)), RequireComponent(typeof(NonDrawingGraphic))]
     public class JoystickView : MonoBehaviour, IPointerDownHandler, IPointerMoveHandler, IPointerUpHandler
     {
         [SerializeField] private JoystickType joystickType;
         [SerializeField] private float        radius;
         [SerializeField] private bool         autoDisable;
+        [SerializeField] private CanvasGroup  canvasGroup;
         [SerializeField] private Transform    joystickHolder;
         [SerializeField] private Transform    joystickHandle;
 
@@ -47,6 +49,7 @@ namespace GameCore.Utils.UIElement
 
         private void ValidateField()
         {
+            this.canvasGroup     ??= this.GetComponent<CanvasGroup>();
             this.canvas          = this.GetComponentInParent<Canvas>();
             this.canvasRect      = this.canvas.GetComponent<RectTransform>();
             this.initialPosition = this.joystickHandle.position;
@@ -75,8 +78,8 @@ namespace GameCore.Utils.UIElement
 
         private void SetActiveView(bool isActive)
         {
-            this.joystickHolder.gameObject.SetActive(isActive);
-            this.joystickHandle.gameObject.SetActive(isActive);
+            var alpha = isActive ? 1 : 0;
+            this.canvasGroup.alpha = alpha;
         }
 
         public void OnPointerMove(PointerEventData eventData)

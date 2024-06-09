@@ -162,6 +162,7 @@ GameObject:
   - component: {fileID: 5320648188132050666}
   - component: {fileID: 9129271416725077369}
   - component: {fileID: 8126267939082771910}
+  - component: {fileID: 7008783564117532948}
   - component: {fileID: 3535611720343177934}
   m_Layer: 5
   m_Name: JoystickView
@@ -214,6 +215,18 @@ MonoBehaviour:
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+--- !u!225 &7008783564117532948
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8631347250393731291}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!114 &3535611720343177934
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -229,6 +242,6 @@ MonoBehaviour:
   joystickType: 1
   radius: 200
   autoDisable: 0
+  canvasGroup: {fileID: 7008783564117532948}
   joystickHolder: {fileID: 6000873305815832550}
   joystickHandle: {fileID: 6451578649322171631}
-  canvas: {fileID: 0}
