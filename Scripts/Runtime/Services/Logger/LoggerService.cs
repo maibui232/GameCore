@@ -4,56 +4,46 @@ namespace GameCore.Services.Logger
     using UnityEngine;
     using Debug = UnityEngine.Debug;
 
-    public interface ILoggerService
+    public static class LoggerService
     {
-        void Log(object obj);
-        void Log(object obj, Color color);
-
-        void Warning(object obj);
-
-        void Error(object obj);
-    }
-
-    public class LoggerService : ILoggerService
-    {
-        private string ToHtmlStringRbg(Color color) { return $"<color=#{ColorUtility.ToHtmlStringRGB(color)}>"; }
+        private static string ToHtmlStringRbg(Color color) { return $"<color=#{ColorUtility.ToHtmlStringRGB(color)}>"; }
 
         #region Log
 
-        public void Log(object obj) { this.InternalLog(obj); }
+        public static void Log(object obj) { InternalLog(obj); }
 
         [Conditional("UNITY_EDITOR")]
         [Conditional("ENABLE_LOG")]
-        private void InternalLog(object obj) { Debug.Log(obj); }
+        private static void InternalLog(object obj) { Debug.Log(obj); }
 
-        public void Log(object obj, Color color) { this.InternalLog(obj, color); }
+        public static void Log(object obj, Color color) {InternalLog(obj, color); }
 
         [Conditional("UNITY_EDITOR")]
         [Conditional("ENABLE_LOG")]
         [Conditional("DEVELOPMENT_BUILD")]
-        private void InternalLog(object obj, Color color) { Debug.Log($"{obj}{this.ToHtmlStringRbg(color)}"); }
+        private static void InternalLog(object obj, Color color) { Debug.Log($"{obj}{ToHtmlStringRbg(color)}"); }
 
         #endregion
 
         #region Warning
 
-        public void Warning(object obj) { this.InternalWarning(obj); }
+        public static void Warning(object obj) { InternalWarning(obj); }
 
         [Conditional("UNITY_EDITOR")]
         [Conditional("ENABLE_LOG")]
         [Conditional("DEVELOPMENT_BUILD")]
-        private void InternalWarning(object obj) { Debug.LogWarning(obj); }
+        private static void InternalWarning(object obj) { Debug.LogWarning(obj); }
 
         #endregion
 
         #region Error
 
-        public void Error(object obj) { this.InternalError(obj); }
+        public static void Error(object obj) { InternalError(obj); }
 
         [Conditional("UNITY_EDITOR")]
         [Conditional("ENABLE_LOG")]
         [Conditional("DEVELOPMENT_BUILD")]
-        private void InternalError(object obj) { Debug.LogError(obj); }
+        private static void InternalError(object obj) { Debug.LogError(obj); }
 
         #endregion
     }

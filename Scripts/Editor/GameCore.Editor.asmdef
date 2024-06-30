@@ -1,6 +1,6 @@
 {
     "name": "GameCore.Editor",
-    "rootNamespace": "",
+    "rootNamespace": "GameCore",
     "references": [
         "GUID:e0a0d9284734fd442899981ea5581776",
         "GUID:b0214a6008ed146ff8f122a6a9c2f6cc"

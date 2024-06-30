@@ -55,7 +55,6 @@ namespace GameCore.Services.ObjectPool
 
         private readonly IGameAssetService gameAssetService;
         private readonly IObjectResolver   objectResolver;
-        private readonly ILoggerService    loggerService;
 
         #endregion
 
@@ -66,13 +65,11 @@ namespace GameCore.Services.ObjectPool
         public ObjectPoolService
         (
             IGameAssetService gameAssetService,
-            IObjectResolver objectResolver,
-            ILoggerService loggerService
+            IObjectResolver objectResolver
         )
         {
             this.gameAssetService = gameAssetService;
             this.objectResolver   = objectResolver;
-            this.loggerService    = loggerService;
 
             Instance = this;
         }
@@ -83,7 +80,7 @@ namespace GameCore.Services.ObjectPool
         {
             if (this.prefabToPoolable.TryGetValue(prefab, out var pool))
             {
-                this.loggerService.Error($"{pool.name} already create!");
+                LoggerService.Error($"{pool.name} already create!");
                 return pool;
             }
 

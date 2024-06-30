@@ -4,22 +4,12 @@ namespace GameCore.Services.ObjectPool
     using System.Collections.Generic;
     using GameCore.Services.Logger;
     using UnityEngine;
-    using VContainer;
 
     public class Poolable : MonoBehaviour
     {
         [SerializeField] private GameObject       prefabObj;
         [SerializeField] private List<GameObject> spawnedObjs = new();
         [SerializeField] private List<GameObject> cachedObjs  = new();
-
-        #region Inject
-
-        private ILoggerService loggerService;
-
-        #endregion
-
-        [Inject]
-        private void Init(ILoggerService logger) { this.loggerService = logger; }
 
         public Action DestroyEvent;
 
@@ -43,7 +33,7 @@ namespace GameCore.Services.ObjectPool
                 this.cachedObjs.Add(prefab);
             }
 
-            this.loggerService.Log($"Create Pool: {this.name}, size: {size}");
+            LoggerService.Log($"Create Pool: {this.name}, size: {size}");
         }
 
         public GameObject Spawn(GameObject prefab, Transform parent)
@@ -68,13 +58,13 @@ namespace GameCore.Services.ObjectPool
         {
             if (this.cachedObjs.Contains(obj))
             {
-                this.loggerService.Error($"{obj.name} has been recycled!");
+                LoggerService.Error($"{obj.name} has been recycled!");
                 return;
             }
 
             if (!this.spawnedObjs.Contains(obj))
             {
-                this.loggerService.Error($"{obj.name} does not contain in {this.name}");
+                LoggerService.Error($"{obj.name} does not contain in {this.name}");
                 return;
             }
 
@@ -92,7 +82,7 @@ namespace GameCore.Services.ObjectPool
             }
 
             this.spawnedObjs.Clear();
-            this.loggerService.Log($"Recycle all: {this.name}", Color.green);
+            LoggerService.Log($"Recycle all: {this.name}", Color.green);
         }
 
         public void CleanUp(bool cleanUpAll = true)
@@ -113,7 +103,7 @@ namespace GameCore.Services.ObjectPool
             }
 
             this.cachedObjs.Clear();
-            this.loggerService.Log($"Clean Up: {this.name}", Color.green);
+            LoggerService.Log($"Clean Up: {this.name}", Color.green);
         }
 
         private void ResetTransformObj(GameObject obj)

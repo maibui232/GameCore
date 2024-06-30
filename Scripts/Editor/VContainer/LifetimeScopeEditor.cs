@@ -1,12 +1,12 @@
-namespace Editor
+namespace GameCore.Editor.VContainer
 {
     using System.Collections.Generic;
     using System.Linq;
     using System.Reflection;
+    using global::VContainer;
+    using global::VContainer.Unity;
     using UnityEditor;
     using UnityEngine;
-    using VContainer;
-    using VContainer.Unity;
 
     [CustomEditor(typeof(LifetimeScope))]
     public class LifetimeScopeEditor : Editor

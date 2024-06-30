@@ -22,7 +22,6 @@ namespace GameCore.Services.LocalData
         #region Inject
 
         private readonly Dictionary<Type, ILocalData> typeToLocalDataCache;
-        private readonly ILoggerService               loggerService;
 
         #endregion
 
@@ -32,12 +31,10 @@ namespace GameCore.Services.LocalData
 
         public LocalDataService
         (
-            IEnumerable<ILocalData> localDataEnumerable,
-            ILoggerService loggerService
+            IEnumerable<ILocalData> localDataEnumerable
         )
         {
             this.typeToLocalDataCache = localDataEnumerable.ToDictionary(x => x.GetType(), x => x);
-            this.loggerService        = loggerService;
         }
 
         public void Save<T>() where T : ILocalData { this.InternalSave(typeof(T)); }
@@ -46,13 +43,13 @@ namespace GameCore.Services.LocalData
         {
             if (!this.typeToLocalDataCache.TryGetValue(type, out var data))
             {
-                this.loggerService.Error($"Doesn't contain or implement type: {type.Name} in {this.GetType().Name}");
+                LoggerService.Error($"Doesn't contain or implement type: {type.Name} in {this.GetType().Name}");
                 return;
             }
 
             var jsonData = JsonConvert.SerializeObject(data);
             PlayerPrefs.SetString(this.GetLocalDataKey(type), jsonData);
-            this.loggerService.Log($"Save: {this.GetLocalDataKey(type)}", Color.green);
+            LoggerService.Log($"Save: {this.GetLocalDataKey(type)}", Color.green);
         }
 
         public void Load<T>() where T : ILocalData { this.InternalLoad(typeof(T)); }
@@ -61,7 +58,7 @@ namespace GameCore.Services.LocalData
         {
             if (!this.typeToLocalDataCache.TryGetValue(type, out _))
             {
-                this.loggerService.Error($"Doesn't contain or implement type: {type.Name} in {this.GetType().Name}");
+                LoggerService.Error($"Doesn't contain or implement type: {type.Name} in {this.GetType().Name}");
                 return;
             }
 
@@ -75,7 +72,7 @@ namespace GameCore.Services.LocalData
             var data     = JsonConvert.DeserializeObject(jsonData, type);
             if(data is not ILocalData d) return;
             this.typeToLocalDataCache[type] = d;
-            this.loggerService.Log($"Load: {this.GetLocalDataKey(type)}", Color.green);
+            LoggerService.Log($"Load: {this.GetLocalDataKey(type)}", Color.green);
         }
 
         public void SaveAll()

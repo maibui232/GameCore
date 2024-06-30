@@ -1,7 +1,8 @@
 namespace GameCore.Extensions.VContainer
 {
-    using System;
     using System.Collections.Generic;
+    using GameCore.Services.ScreenFlow;
+    using GameCore.Services.ScreenFlow.Base;
     using global::VContainer;
     using MessagePipe;
 
@@ -10,19 +11,21 @@ namespace GameCore.Extensions.VContainer
         private static readonly List<Registration> Registrations = new();
         private static readonly MessagePipeOptions Options       = new();
 
-        public static T InstantiateConcrete<T>(this IContainerBuilder builder, IObjectResolver resolver)
-        {
-            return (T)builder.Register<T>(Lifetime.Scoped).Build().SpawnInstance(resolver);
-        }
-
-        public static object InstantiateConcrete(this IContainerBuilder builder, IObjectResolver resolver, Type type)
-        {
-            return builder.Register(type, Lifetime.Scoped).Build().SpawnInstance(resolver);
-        }
+        public static IContainerBuilder ContainerBuilder { get; set; }
 
         public static IContainerBuilder RegisterMessage<TMessage>(this IContainerBuilder builder)
         {
             return builder.RegisterMessageBroker<TMessage>(Options);
+        }
+
+        public static void InitScreenManually<TPresenter>(this IContainerBuilder builder) where TPresenter : IScreenPresenter
+        {
+            builder.RegisterBuildCallback(resolver => resolver.Resolve<IScreenFlowService>().InitScreenManually<TPresenter>());
+        }
+
+        public static void InitScreenManually<TPresenter, TModel>(this IContainerBuilder builder, TModel model) where TPresenter : IScreenPresenter<TModel>
+        {
+            builder.RegisterBuildCallback(resolver => resolver.Resolve<IScreenFlowService>().InitScreenManually<TPresenter, TModel>(model));
         }
     }
 }

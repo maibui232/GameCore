@@ -1,11 +1,10 @@
-using GameCore.Utils.UIElement;
-using UnityEditor;
-using UnityEditor.UI;
-using UnityEngine;
-
-namespace Editor
+namespace GameCore.Editor.UI
 {
     using System;
+    using GameCore.Utils.UIElement;
+    using UnityEditor;
+    using UnityEditor.UI;
+    using UnityEngine;
 
     [CanEditMultipleObjects, CustomEditor(typeof(NonDrawingGraphic), false)]
     public class NonDrawingGraphicEditor : GraphicEditor
