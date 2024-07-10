@@ -12,7 +12,7 @@ namespace GameCore
         public override void InstallBinding(IContainerBuilder builder)
         {
             builder.RegisterMessagePipe();
-            
+
             // Scene Flow
             builder.RegisterMessage<OpenSingleSceneMessage>();
             builder.RegisterMessage<OpenAdditiveSceneMessage>();

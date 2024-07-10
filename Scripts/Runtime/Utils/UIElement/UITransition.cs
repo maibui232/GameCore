@@ -11,6 +11,12 @@ namespace GameCore.Utils.UIElement
 
         private bool isPlayingTimeline;
 
+        private void Awake()
+        {
+            this.introPlayable.stopped += this.OnStop;
+            this.outroPlayable.stopped += this.OnStop;
+        }
+
         private void OnValidate()
         {
             this.ValidatePlayableDirector(this.introPlayable);
@@ -23,12 +29,6 @@ namespace GameCore.Utils.UIElement
 
             director.extrapolationMode = DirectorWrapMode.None;
             director.timeUpdateMode    = DirectorUpdateMode.UnscaledGameTime;
-        }
-
-        private void Awake()
-        {
-            this.introPlayable.stopped += this.OnStop;
-            this.outroPlayable.stopped += this.OnStop;
         }
 
         private void OnStop(PlayableDirector obj)
@@ -49,13 +49,9 @@ namespace GameCore.Utils.UIElement
         private UniTask PlayTimeline(PlayableDirector director)
         {
             this.isPlayingTimeline = true;
-            if (director == null)
-            {
-                
-                return UniTask.CompletedTask;
-            }
+            if (director == null) return UniTask.CompletedTask;
             director.Play();
-            return UniTask.WaitUntil(() => this.isPlayingTimeline);
+            return UniTask.WaitUntil(() => !this.isPlayingTimeline);
         }
     }
 }

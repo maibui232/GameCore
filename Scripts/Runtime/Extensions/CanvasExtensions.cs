@@ -9,6 +9,7 @@ namespace GameCore.Extensions
             var rectTr       = canvas.transform as RectTransform;
             var canvasMatrix = rectTr.localToWorldMatrix;
             canvasMatrix *= Matrix4x4.Translate(-rectTr.sizeDelta / 2);
+
             return canvasMatrix;
         }
     }

@@ -19,7 +19,7 @@ namespace GameCore.Editor.Utils
         public static void CreateJoystick()
         {
             var selectedObj = Selection.activeGameObject;
-            var prefab      = AssetDatabase.LoadAssetAtPath<GameObject>("Packages/game.core/Prefabs/UISamples/JoystickView.prefab");
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Packages/game.core/Prefabs/UISamples/JoystickView.prefab");
             PrefabUtility.InstantiatePrefab(prefab, selectedObj.transform);
         }
 
@@ -46,9 +46,7 @@ namespace GameCore.Editor.Utils
                 AssetDatabase.CreateAsset(vContainerSettings, VContainerSettingsPath);
                 var preloadAssets = PlayerSettings.GetPreloadedAssets().ToList();
                 foreach (var preloadAsset in preloadAssets.ToList().Where(preloadAsset => preloadAsset == null))
-                {
                     preloadAssets.Remove(preloadAsset);
-                }
 
                 preloadAssets.Add(vContainerSettings);
                 PlayerSettings.SetPreloadedAssets(preloadAssets.ToArray());
@@ -56,20 +54,21 @@ namespace GameCore.Editor.Utils
                 vContainerSettings.RootLifetimeScope  = assetProjectContext;
                 vContainerSettings.EnableDiagnostics  = true;
                 vContainerSettings.RemoveClonePostfix = true;
+                EditorUtility.SetDirty(vContainerSettings);
             }
             else
             {
                 VContainerSettings.Instance.RootLifetimeScope = assetProjectContext;
+                EditorUtility.SetDirty(VContainerSettings.Instance);
             }
+
+            AssetDatabase.SaveAssets();
         }
 
         [MenuItem("GameObject/VContainer/SceneContext")]
         public static void CreateSceneContext()
         {
-            if (VContainerSettings.Instance == null)
-            {
-                CreateProjectContext();
-            }
+            if (VContainerSettings.Instance == null) CreateProjectContext();
 
             var newInstance  = new GameObject(nameof(SceneContext));
             var sceneContext = newInstance.AddComponent<SceneContext>();

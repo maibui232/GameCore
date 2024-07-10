@@ -10,62 +10,55 @@ namespace GameCore.Services.ObjectPool
     public interface IObjectPoolService
     {
         Poolable CreatePool(GameObject prefab, int size = 1, bool dontDestroyOnLoad = false);
-        Poolable CreatePool<T>(T prefab, int size = 1, bool dontDestroyOnLoad = false) where T : Component;
+        Poolable CreatePool<T>(T       prefab, int size = 1, bool dontDestroyOnLoad = false) where T : Component;
 
-        UniTask<Poolable> CreatePool(string addressableId, int size = 1, bool dontDestroyOnLoad = false);
+        UniTask<Poolable> CreatePool(string    addressableId, int size = 1, bool dontDestroyOnLoad = false);
         UniTask<Poolable> CreatePool<T>(string addressableId, int size = 1, bool dontDestroyOnLoad = false) where T : Component;
 
         GameObject Spawn(GameObject prefab);
         GameObject Spawn(GameObject prefab, Transform parent);
-        GameObject Spawn(GameObject prefab, Vector3 position);
-        GameObject Spawn(GameObject prefab, Vector3 position, Vector3 rotation);
-        GameObject Spawn(GameObject prefab, Vector3 position, Quaternion rotation);
+        GameObject Spawn(GameObject prefab, Vector3   position);
+        GameObject Spawn(GameObject prefab, Vector3   position, Vector3    rotation);
+        GameObject Spawn(GameObject prefab, Vector3   position, Quaternion rotation);
 
         UniTask<GameObject> Spawn(string addressableId);
         UniTask<GameObject> Spawn(string addressableId, Transform parent);
-        UniTask<GameObject> Spawn(string addressableId, Vector3 position);
-        UniTask<GameObject> Spawn(string addressableId, Vector3 position, Vector3 rotation);
-        UniTask<GameObject> Spawn(string addressableId, Vector3 position, Quaternion rotation);
+        UniTask<GameObject> Spawn(string addressableId, Vector3   position);
+        UniTask<GameObject> Spawn(string addressableId, Vector3   position, Vector3    rotation);
+        UniTask<GameObject> Spawn(string addressableId, Vector3   position, Quaternion rotation);
 
         T Spawn<T>(T prefab) where T : Component;
         T Spawn<T>(T prefab, Transform parent) where T : Component;
-        T Spawn<T>(T prefab, Vector3 position) where T : Component;
-        T Spawn<T>(T prefab, Vector3 position, Vector3 rotation) where T : Component;
-        T Spawn<T>(T prefab, Vector3 position, Quaternion rotation) where T : Component;
+        T Spawn<T>(T prefab, Vector3   position) where T : Component;
+        T Spawn<T>(T prefab, Vector3   position, Vector3    rotation) where T : Component;
+        T Spawn<T>(T prefab, Vector3   position, Quaternion rotation) where T : Component;
 
         UniTask<T> Spawn<T>(string addressableId) where T : Component;
         UniTask<T> Spawn<T>(string addressableId, Transform parent) where T : Component;
-        UniTask<T> Spawn<T>(string addressableId, Vector3 position) where T : Component;
-        UniTask<T> Spawn<T>(string addressableId, Vector3 position, Vector3 rotation) where T : Component;
-        UniTask<T> Spawn<T>(string addressableId, Vector3 position, Quaternion rotation) where T : Component;
+        UniTask<T> Spawn<T>(string addressableId, Vector3   position) where T : Component;
+        UniTask<T> Spawn<T>(string addressableId, Vector3   position, Vector3    rotation) where T : Component;
+        UniTask<T> Spawn<T>(string addressableId, Vector3   position, Quaternion rotation) where T : Component;
 
         void Recycle(GameObject obj);
-        void Recycle<T>(T obj) where T : Component;
+        void Recycle<T>(T       obj) where T : Component;
 
         void RecycleAll(GameObject obj);
-        void RecycleAll<T>(T obj) where T : Component;
+        void RecycleAll<T>(T       obj) where T : Component;
 
         void CleanUp(GameObject obj, bool cleanUpAll = true);
-        void CleanUp<T>(T obj, bool cleanUpAll = true) where T : Component;
+        void CleanUp<T>(T       obj, bool cleanUpAll = true) where T : Component;
     }
 
     public class ObjectPoolService : IObjectPoolService
     {
-        #region Inject
-
-        private readonly IGameAssetService gameAssetService;
-        private readonly IObjectResolver   objectResolver;
-
-        #endregion
-
-        private Dictionary<GameObject, Poolable> prefabToPoolable = new();
-
         public static ObjectPoolService Instance;
+
+        private readonly Dictionary<GameObject, Poolable> prefabToPoolable = new();
 
         public ObjectPoolService
         (
             IGameAssetService gameAssetService,
-            IObjectResolver objectResolver
+            IObjectResolver   objectResolver
         )
         {
             this.gameAssetService = gameAssetService;
@@ -74,13 +67,21 @@ namespace GameCore.Services.ObjectPool
             Instance = this;
         }
 
-        #region CreatePool
+#region Inject
+
+        private readonly IGameAssetService gameAssetService;
+        private readonly IObjectResolver   objectResolver;
+
+#endregion
+
+#region CreatePool
 
         public Poolable CreatePool(GameObject prefab, int size = 1, bool dontDestroyOnLoad = false)
         {
             if (this.prefabToPoolable.TryGetValue(prefab, out var pool))
             {
                 LoggerService.Error($"{pool.name} already create!");
+
                 return pool;
             }
 
@@ -89,6 +90,7 @@ namespace GameCore.Services.ObjectPool
             poolableObj.DestroyEvent = () => this.prefabToPoolable.Remove(prefab);
             this.prefabToPoolable.Add(prefab, poolableObj);
             poolableObj.CreatePool(prefab, size, dontDestroyOnLoad);
+
             return poolableObj;
         }
 
@@ -100,34 +102,30 @@ namespace GameCore.Services.ObjectPool
         public async UniTask<Poolable> CreatePool(string addressableId, int size = 1, bool dontDestroyOnLoad = false)
         {
             var prefab = await this.gameAssetService.LoadAssetAsync<GameObject>(addressableId);
+
             return this.CreatePool(prefab, size, dontDestroyOnLoad);
         }
 
-        public UniTask<Poolable> CreatePool<T>(string addressableId, int size = 1, bool dontDestroyOnLoad = false) where T : Component
+        public UniTask<Poolable> CreatePool<T>
+            (string addressableId, int size = 1, bool dontDestroyOnLoad = false) where T : Component
         {
             return this.CreatePool(addressableId, size, dontDestroyOnLoad);
         }
 
-        #endregion
+#endregion
 
-        #region Spawn
+#region Spawn
 
         public GameObject Spawn(GameObject prefab)
         {
-            if (!this.prefabToPoolable.TryGetValue(prefab, out _))
-            {
-                this.CreatePool(prefab);
-            }
+            if (!this.prefabToPoolable.TryGetValue(prefab, out _)) this.CreatePool(prefab);
 
             return this.prefabToPoolable[prefab].Spawn(prefab, null);
         }
 
         public GameObject Spawn(GameObject prefab, Transform parent)
         {
-            if (!this.prefabToPoolable.TryGetValue(prefab, out _))
-            {
-                this.CreatePool(prefab);
-            }
+            if (!this.prefabToPoolable.TryGetValue(prefab, out _)) this.CreatePool(prefab);
 
             return this.prefabToPoolable[prefab].Spawn(prefab, parent);
         }
@@ -136,6 +134,7 @@ namespace GameCore.Services.ObjectPool
         {
             var obj = this.Spawn(prefab);
             obj.transform.position = position;
+
             return obj;
         }
 
@@ -145,6 +144,7 @@ namespace GameCore.Services.ObjectPool
             var objTransform = obj.transform;
             objTransform.position    = position;
             objTransform.eulerAngles = rotation;
+
             return obj;
         }
 
@@ -154,36 +154,42 @@ namespace GameCore.Services.ObjectPool
             var objTransform = obj.transform;
             objTransform.position = position;
             objTransform.rotation = rotation;
+
             return obj;
         }
 
         public async UniTask<GameObject> Spawn(string addressableId)
         {
             var prefab = await this.gameAssetService.LoadAssetAsync<GameObject>(addressableId);
+
             return this.Spawn(prefab);
         }
 
         public async UniTask<GameObject> Spawn(string addressableId, Transform parent)
         {
             var prefab = await this.gameAssetService.LoadAssetAsync<GameObject>(addressableId);
+
             return this.Spawn(prefab, parent);
         }
 
         public async UniTask<GameObject> Spawn(string addressableId, Vector3 position)
         {
             var prefab = await this.gameAssetService.LoadAssetAsync<GameObject>(addressableId);
+
             return this.Spawn(prefab, position);
         }
 
         public async UniTask<GameObject> Spawn(string addressableId, Vector3 position, Vector3 rotation)
         {
             var prefab = await this.gameAssetService.LoadAssetAsync<GameObject>(addressableId);
+
             return this.Spawn(prefab, position, rotation);
         }
 
         public async UniTask<GameObject> Spawn(string addressableId, Vector3 position, Quaternion rotation)
         {
             var prefab = await this.gameAssetService.LoadAssetAsync<GameObject>(addressableId);
+
             return this.Spawn(prefab, position, rotation);
         }
 
@@ -215,36 +221,42 @@ namespace GameCore.Services.ObjectPool
         public async UniTask<T> Spawn<T>(string addressableId) where T : Component
         {
             var prefab = await this.gameAssetService.LoadAssetAsync<T>(addressableId);
+
             return this.Spawn(prefab);
         }
 
         public async UniTask<T> Spawn<T>(string addressableId, Transform parent) where T : Component
         {
             var prefab = await this.gameAssetService.LoadAssetAsync<T>(addressableId);
+
             return this.Spawn(prefab, parent);
         }
 
         public async UniTask<T> Spawn<T>(string addressableId, Vector3 position) where T : Component
         {
             var prefab = await this.gameAssetService.LoadAssetAsync<T>(addressableId);
+
             return this.Spawn(prefab, position);
         }
 
         public async UniTask<T> Spawn<T>(string addressableId, Vector3 position, Vector3 rotation) where T : Component
         {
             var prefab = await this.gameAssetService.LoadAssetAsync<T>(addressableId);
+
             return this.Spawn(prefab, position, rotation);
         }
 
-        public async UniTask<T> Spawn<T>(string addressableId, Vector3 position, Quaternion rotation) where T : Component
+        public async UniTask<T> Spawn<T>
+            (string addressableId, Vector3 position, Quaternion rotation) where T : Component
         {
             var prefab = await this.gameAssetService.LoadAssetAsync<T>(addressableId);
+
             return this.Spawn(prefab, position, rotation);
         }
 
-        #endregion
+#endregion
 
-        #region Recycle
+#region Recycle
 
         public void Recycle(GameObject obj)
         {
@@ -252,6 +264,7 @@ namespace GameCore.Services.ObjectPool
             {
                 if (!poolable.ContainsObj(obj)) continue;
                 poolable.Recycle(obj);
+
                 return;
             }
         }
@@ -261,9 +274,9 @@ namespace GameCore.Services.ObjectPool
             this.Recycle(obj.gameObject);
         }
 
-        #endregion
+#endregion
 
-        #region RecycleAll
+#region RecycleAll
 
         public void RecycleAll(GameObject obj)
         {
@@ -271,6 +284,7 @@ namespace GameCore.Services.ObjectPool
             {
                 if (!poolable.ContainsObj(obj)) continue;
                 poolable.RecycleAll();
+
                 return;
             }
         }
@@ -280,9 +294,9 @@ namespace GameCore.Services.ObjectPool
             this.RecycleAll(obj.gameObject);
         }
 
-        #endregion
+#endregion
 
-        #region CleanUp
+#region CleanUp
 
         public void CleanUp(GameObject obj, bool cleanUpAll = true)
         {
@@ -290,6 +304,7 @@ namespace GameCore.Services.ObjectPool
             {
                 if (!poolable.ContainsObj(obj)) continue;
                 poolable.CleanUp(cleanUpAll);
+
                 return;
             }
         }
@@ -299,6 +314,6 @@ namespace GameCore.Services.ObjectPool
             this.CleanUp(obj.gameObject, cleanUpAll);
         }
 
-        #endregion
+#endregion
     }
 }

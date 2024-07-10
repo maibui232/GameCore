@@ -12,12 +12,17 @@ namespace GameCore.Services.ScreenFlow
         [SerializeField] private Canvas    defaultLayerCanvas;
         [SerializeField] private Transform closeLayerTransform;
 
+        private readonly Dictionary<int, Canvas> orderToLayerCanvas = new();
+
         public Camera    UICamera            => this.uiCamera;
         public Canvas    RootCanvas          => this.rootCanvas;
         public Canvas    CanvasLayerPrefab   => this.canvasLayerPrefab;
         public Transform CloseLayerTransform => this.closeLayerTransform;
 
-        private readonly Dictionary<int, Canvas> orderToLayerCanvas = new();
+        private void Awake()
+        {
+            this.AddCanvas(0, this.defaultLayerCanvas);
+        }
 
         private void OnValidate()
         {
@@ -28,11 +33,6 @@ namespace GameCore.Services.ScreenFlow
             }
         }
 
-        private void Awake()
-        {
-            this.AddCanvas(0, this.defaultLayerCanvas);
-        }
-
         [Inject]
         private void Construct(IScreenFlowService screenFlowService)
         {
@@ -41,13 +41,11 @@ namespace GameCore.Services.ScreenFlow
 
         public Canvas GetOrCreateOverlayCanvas(int orderLayer)
         {
-            if (this.orderToLayerCanvas.TryGetValue(orderLayer, out var overlayCanvas))
-            {
-                return overlayCanvas;
-            }
+            if (this.orderToLayerCanvas.TryGetValue(orderLayer, out var overlayCanvas)) return overlayCanvas;
 
             var canvas = Instantiate(this.canvasLayerPrefab, this.transform, false);
             this.AddCanvas(orderLayer, canvas);
+
             return canvas;
         }
 

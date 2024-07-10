@@ -13,10 +13,7 @@ namespace GameCore.Extensions.VContainer
 
         public void InstallBinding(IContainerBuilder builder)
         {
-            foreach (var installer in this.monoInstallers)
-            {
-                installer.InstallBinding(builder);
-            }
+            foreach (var installer in this.monoInstallers) installer.InstallBinding(builder);
         }
     }
 }

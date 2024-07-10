@@ -19,15 +19,13 @@ namespace GameCore.Services.LocalData
 
     public class LocalDataService : ILocalDataService
     {
-        #region Inject
+        private const string LocalDataPrefixKey = "LD_";
+
+#region Inject
 
         private readonly Dictionary<Type, ILocalData> typeToLocalDataCache;
 
-        #endregion
-
-        private const string LocalDataPrefixKey = "LD_";
-
-        private string GetLocalDataKey(MemberInfo type) { return $"{LocalDataPrefixKey}{type.Name}"; }
+#endregion
 
         public LocalDataService
         (
@@ -37,13 +35,37 @@ namespace GameCore.Services.LocalData
             this.typeToLocalDataCache = localDataEnumerable.ToDictionary(x => x.GetType(), x => x);
         }
 
-        public void Save<T>() where T : ILocalData { this.InternalSave(typeof(T)); }
+        public void Save<T>() where T : ILocalData
+        {
+            this.InternalSave(typeof(T));
+        }
+
+        public void Load<T>() where T : ILocalData
+        {
+            this.InternalLoad(typeof(T));
+        }
+
+        public void SaveAll()
+        {
+            foreach (var (key, value) in this.typeToLocalDataCache) this.InternalSave(key);
+        }
+
+        public void LoadAll()
+        {
+            foreach (var (key, value) in this.typeToLocalDataCache) this.InternalLoad(key);
+        }
+
+        private string GetLocalDataKey(MemberInfo type)
+        {
+            return $"{LocalDataPrefixKey}{type.Name}";
+        }
 
         private void InternalSave(Type type)
         {
             if (!this.typeToLocalDataCache.TryGetValue(type, out var data))
             {
                 LoggerService.Error($"Doesn't contain or implement type: {type.Name} in {this.GetType().Name}");
+
                 return;
             }
 
@@ -52,43 +74,28 @@ namespace GameCore.Services.LocalData
             LoggerService.Log($"Save: {this.GetLocalDataKey(type)}", Color.green);
         }
 
-        public void Load<T>() where T : ILocalData { this.InternalLoad(typeof(T)); }
-
         private void InternalLoad(Type type)
         {
             if (!this.typeToLocalDataCache.TryGetValue(type, out _))
             {
                 LoggerService.Error($"Doesn't contain or implement type: {type.Name} in {this.GetType().Name}");
+
                 return;
             }
 
             if (!PlayerPrefs.HasKey(this.GetLocalDataKey(type)))
             {
                 this.typeToLocalDataCache[type].Init();
+
                 return;
             }
-            
+
             var jsonData = PlayerPrefs.GetString(this.GetLocalDataKey(type));
             var data     = JsonConvert.DeserializeObject(jsonData, type);
-            if(data is not ILocalData d) return;
+
+            if (data is not ILocalData d) return;
             this.typeToLocalDataCache[type] = d;
             LoggerService.Log($"Load: {this.GetLocalDataKey(type)}", Color.green);
-        }
-
-        public void SaveAll()
-        {
-            foreach (var (key, value) in this.typeToLocalDataCache)
-            {
-                this.InternalSave(key);
-            }
-        }
-
-        public void LoadAll()
-        {
-            foreach (var (key, value) in this.typeToLocalDataCache)
-            {
-                this.InternalLoad(key);
-            }
         }
     }
 }

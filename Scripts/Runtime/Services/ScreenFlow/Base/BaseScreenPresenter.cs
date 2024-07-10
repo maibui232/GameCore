@@ -2,6 +2,7 @@ namespace GameCore.Services.ScreenFlow.Base
 {
     using Cysharp.Threading.Tasks;
     using GameCore.Services.Message;
+    using UnityEngine;
 
     public abstract class BaseScreenPresenter<TView> : IScreenPresenter where TView : BaseUIView
     {
@@ -32,6 +33,14 @@ namespace GameCore.Services.ScreenFlow.Base
 
         protected TView View { get; private set; }
 
+        public void SetParent(Transform parent)
+        {
+            if (this.View != null)
+            {
+                this.View.SetParent(parent);
+            }
+        }
+
         public void SetView(IUIView view)
         {
             this.View = view as TView;
@@ -49,16 +58,14 @@ namespace GameCore.Services.ScreenFlow.Base
 
         public async void OpenView()
         {
-            this.View.OpenView();
             await this.OpenViewAsync();
         }
 
         public async UniTask OpenViewAsync()
         {
-            this.MessageService.Publish(this.screenOpenedMessage);
+            await UniTask.WhenAll(this.OnViewOpenAsync(), this.View.OpenViewAsync());
             this.ScreenStatus = ScreenStatus.Open;
-            await this.OnViewOpenAsync();
-            this.View.OpenView();
+            this.MessageService.Publish(this.screenOpenedMessage);
         }
 
         public async void CloseView()
@@ -68,10 +75,9 @@ namespace GameCore.Services.ScreenFlow.Base
 
         public async UniTask CloseViewAsync()
         {
-            this.MessageService.Publish(this.screenClosedMessage);
+            await UniTask.WhenAll(this.OnViewCloseAsync(), this.View.CloseViewAsync());
             this.ScreenStatus = ScreenStatus.Open;
-            await this.OnViewCloseAsync();
-            this.View.CloseView();
+            this.MessageService.Publish(this.screenClosedMessage);
         }
 
         public async void DestroyView()

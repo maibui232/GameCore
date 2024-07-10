@@ -9,7 +9,7 @@ namespace GameCore.Editor.UI
     [CanEditMultipleObjects, CustomEditor(typeof(NonDrawingGraphic), false)]
     public class NonDrawingGraphicEditor : GraphicEditor
     {
-        public override void OnInspectorGUI ()
+        public override void OnInspectorGUI()
         {
             this.serializedObject.Update();
             EditorGUILayout.PropertyField(this.m_Script, Array.Empty<GUILayoutOption>());

@@ -1,5 +1,7 @@
 namespace GameCore.Services.ScreenFlow.Base
 {
+    using Cysharp.Threading.Tasks;
+    using GameCore.Services.Logger;
     using GameCore.Services.ScreenFlow.MVP;
     using GameCore.Utils.UIElement;
     using UnityEngine;
@@ -9,21 +11,23 @@ namespace GameCore.Services.ScreenFlow.Base
         void ShowView();
         void HideView();
         void OpenView();
+        UniTask OpenViewAsync();
         void CloseView();
+        UniTask CloseViewAsync();
         void DestroyView();
     }
 
     [RequireComponent(typeof(CanvasGroup)), RequireComponent(typeof(UITransition))]
     public abstract class BaseUIView : MonoBehaviour, IUIView
     {
-        #region Field
+#region Field
 
         [SerializeField] private UITransition uiTransition;
         [SerializeField] private CanvasGroup  canvasGroup;
 
-        #endregion
+#endregion
 
-        #region MonoBehaviour
+#region MonoBehaviour
 
 #if UNITY_EDITOR
         private void OnValidate()
@@ -70,9 +74,9 @@ namespace GameCore.Services.ScreenFlow.Base
         {
         }
 
-        #endregion
+#endregion
 
-        #region Implement IUIView
+#region Implement IUIView
 
         public GameObject ViewObject { get; private set; }
 
@@ -83,21 +87,37 @@ namespace GameCore.Services.ScreenFlow.Base
 
         public void ShowView()
         {
-            this.canvasGroup.alpha = 1;
+            this.canvasGroup.alpha          = 1;
+            this.canvasGroup.blocksRaycasts = true;
         }
 
         public void HideView()
         {
-            this.canvasGroup.alpha = 0;
+            this.canvasGroup.alpha          = 0;
+            this.canvasGroup.blocksRaycasts = false;
         }
 
         public void OpenView()
         {
+            this.OpenViewAsync().Forget();
+        }
+
+        public async UniTask OpenViewAsync()
+        {
             this.canvasGroup.alpha = 1;
+            await this.uiTransition.PlayIntro();
+            this.canvasGroup.blocksRaycasts = true;
         }
 
         public void CloseView()
         {
+            this.CloseViewAsync().Forget();
+        }
+
+        public async UniTask CloseViewAsync()
+        {
+            this.canvasGroup.blocksRaycasts = false;
+            await this.uiTransition.PlayOutro();
             this.canvasGroup.alpha = 0;
         }
 
@@ -106,6 +126,6 @@ namespace GameCore.Services.ScreenFlow.Base
             Destroy(this.gameObject);
         }
 
-        #endregion
+#endregion
     }
 }

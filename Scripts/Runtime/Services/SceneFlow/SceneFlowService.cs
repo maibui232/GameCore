@@ -14,26 +14,18 @@ namespace GameCore.Services.SceneFlow
     {
         SceneInstance                       MainActiveScene { get; }
         List<SceneInstance>                 OverlayScene    { get; }
-        UniTask<SceneInstance>              OpenSingleSceneAsync(string sceneName, bool activeOnLoad = true);
-        UniTask<SceneInstance>              OpenAdditiveSceneAsync(string sceneName, bool activeOnLoad = true);
+        UniTask<SceneInstance>              OpenSingleSceneAsync(string    sceneName,     bool activeOnLoad     = true);
+        UniTask<SceneInstance>              OpenAdditiveSceneAsync(string  sceneName,     bool activeOnLoad     = true);
         AsyncOperationHandle<SceneInstance> UnloadSceneAsync(SceneInstance sceneInstance, bool autoReleaseAsset = true);
     }
 
     public class SceneFlowService : ISceneFlowService
     {
-        #region Inject
+#region Inject
 
         private readonly IMessageService messageService;
 
-        #endregion
-
-        #region Cache
-
-        private readonly OpenAdditiveSceneMessage openAdditiveSceneMessage = new();
-        private readonly OpenSingleSceneMessage   openSingleSceneMessage   = new();
-        private readonly ReleaseSceneMessage      releaseSceneMessage      = new();
-
-        #endregion
+#endregion
 
         public SceneFlowService(IMessageService messageService)
         {
@@ -41,20 +33,14 @@ namespace GameCore.Services.SceneFlow
         }
 
         public SceneInstance       MainActiveScene { get; private set; }
-        public List<SceneInstance> OverlayScene    { get; private set; } = new();
+        public List<SceneInstance> OverlayScene    { get; } = new();
 
         public async UniTask<SceneInstance> OpenSingleSceneAsync(string sceneName, bool activeOnLoad = true)
         {
             // release scene
-            foreach (var overlayScene in this.OverlayScene)
-            {
-                this.UnloadSceneAsync(overlayScene);
-            }
+            foreach (var overlayScene in this.OverlayScene) this.UnloadSceneAsync(overlayScene);
 
-            if (this.MainActiveScene.Scene.IsValid())
-            {
-                this.UnloadSceneAsync(this.MainActiveScene);
-            }
+            if (this.MainActiveScene.Scene.IsValid()) this.UnloadSceneAsync(this.MainActiveScene);
 
             this.MainActiveScene = default;
             this.OverlayScene.Clear();
@@ -66,6 +52,7 @@ namespace GameCore.Services.SceneFlow
 
             LoggerService.Log($"Load new single scene: {sceneInstance.Scene.name}", Color.magenta);
             this.MainActiveScene = sceneInstance;
+
             return sceneInstance;
         }
 
@@ -77,21 +64,30 @@ namespace GameCore.Services.SceneFlow
 
             LoggerService.Log($"Load new additive scene: {sceneInstance.Scene.name}", Color.magenta);
             this.OverlayScene.Add(sceneInstance);
+
             return sceneInstance;
         }
 
-        public AsyncOperationHandle<SceneInstance> UnloadSceneAsync(SceneInstance sceneInstance, bool autoReleaseAsset = true)
+        public AsyncOperationHandle<SceneInstance> UnloadSceneAsync
+            (SceneInstance sceneInstance, bool autoReleaseAsset = true)
         {
-            if (this.OverlayScene.Contains(sceneInstance))
-            {
-                this.OverlayScene.Remove(sceneInstance);
-            }
+            if (this.OverlayScene.Contains(sceneInstance)) this.OverlayScene.Remove(sceneInstance);
 
             this.releaseSceneMessage.SceneName = sceneInstance.Scene.name;
             this.messageService.Publish(this.releaseSceneMessage);
 
             LoggerService.Log($"Release scene: {sceneInstance.Scene.name}", Color.magenta);
-            return Addressables.UnloadSceneAsync(sceneInstance, UnloadSceneOptions.UnloadAllEmbeddedSceneObjects, autoReleaseAsset);
+
+            return Addressables.UnloadSceneAsync(sceneInstance, UnloadSceneOptions.UnloadAllEmbeddedSceneObjects,
+                                                 autoReleaseAsset);
         }
+
+#region Cache
+
+        private readonly OpenAdditiveSceneMessage openAdditiveSceneMessage = new();
+        private readonly OpenSingleSceneMessage   openSingleSceneMessage   = new();
+        private readonly ReleaseSceneMessage      releaseSceneMessage      = new();
+
+#endregion
     }
 }

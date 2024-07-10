@@ -31,27 +31,11 @@ namespace GameCore.Services.ScreenFlow
 
     public class ScreenFlowService : IScreenFlowService
     {
-        #region Inject
-
-        private readonly IObjectResolver   resolver;
-        private readonly IGameAssetService gameAssetService;
-        private readonly IMessageService   messageService;
-
-        #endregion
-
-        #region Cache
-
-        private readonly Dictionary<uint, List<IScreenPresenter>> orderLayerToScreenShow = new();
-        private readonly Dictionary<string, IScreenPresenter>     cachedScreens          = new();
-        private readonly Dictionary<Type, UIInfoAttribute>        typeToUIInfo           = new();
-
-        #endregion
-
         public ScreenFlowService
         (
-            IObjectResolver resolver,
+            IObjectResolver   resolver,
             IGameAssetService gameAssetService,
-            IMessageService messageService
+            IMessageService   messageService
         )
         {
             this.resolver         = resolver;
@@ -71,146 +55,26 @@ namespace GameCore.Services.ScreenFlow
             this.messageService.Subscribe<ScreenDestroyedMessage>(this.OnScreenDestroyed);
         }
 
-        #region Message
-
-        private void OnOpenSingleScene(OpenSingleSceneMessage message)
+        private async UniTask CloseAllScreenWithOrder(uint order)
         {
-        }
-
-        private void OnReleaseScene(ReleaseSceneMessage obj)
-        {
-        }
-
-        private void OnScreenInitialize(ScreenInitializeMessage message)
-        {
-        }
-
-        private void OnScreenOpened(ScreenOpenedMessage message)
-        {
-            if (message.ScreenPresenter == null) return;
-            var uiInfo = this.GetUIInfo(message.ScreenPresenter.GetType());
-
-            if (!this.orderLayerToScreenShow.TryGetValue(uiInfo.OrderLayer, out var screens)) return;
-
-            screens.Add(message.ScreenPresenter);
-        }
-
-        private void OnScreenClosed(ScreenClosedMessage message)
-        {
-            if (message.ScreenPresenter == null) return;
-            var uiInfo = this.GetUIInfo(message.ScreenPresenter.GetType());
-
-            if (!this.orderLayerToScreenShow.TryGetValue(uiInfo.OrderLayer, out var screens)) return;
-
-            if (!screens.Contains(message.ScreenPresenter)) return;
-
-            screens.Remove(message.ScreenPresenter);
-        }
-
-        private void OnScreenDestroyed(ScreenDestroyedMessage message)
-        {
-        }
-
-        #endregion
-
-        #region IScreenFlowService
-
-        public RootUIView RootUIView { get; set; }
-
-        public IScreenPresenter CurrentScreen { get; private set; }
-
-        public async UniTask<TPresenter> InitScreenManually<TPresenter>() where TPresenter : IScreenPresenter
-        {
-            await UniTask.WaitUntil(() => this.RootUIView != null);
-            var view      = this.RootUIView.GetComponentInChildren<IUIView>();
-            var presenter = await this.GetOrAddScreen<TPresenter>(view);
-            presenter.BindData();
-            return presenter;
-        }
-
-        public async UniTask<TPresenter> InitScreenManually<TPresenter, TModel>(TModel model) where TPresenter : IScreenPresenter<TModel>
-        {
-            await UniTask.WaitUntil(() => this.RootUIView != null);
-            var view      = this.RootUIView.GetComponentInChildren<IUIView>();
-            var presenter = await this.GetOrAddScreen<TPresenter>(view);
-            presenter.BindData(model);
-            return presenter;
-        }
-
-        public async UniTask<TPresenter> OpenScreenAsync<TPresenter>(bool overlap = false) where TPresenter : IScreenPresenter
-        {
-            var presenter = await this.GetOrAddScreen<TPresenter>();
-            presenter.BindData();
-            return presenter;
-        }
-
-        public async UniTask<TPresenter> OpenScreenAsync<TPresenter, TModel>(TModel model, bool overlap = false) where TPresenter : IScreenPresenter<TModel>
-        {
-            var uiInfo = this.GetUIInfo<TPresenter>();
-            if (this.orderLayerToScreenShow.TryGetValue(uiInfo.OrderLayer, out var screenPresenters))
+            if (this.orderLayerToScreenShow.TryGetValue(order, out var screenPresenters))
             {
-                var closeTasks = new List<UniTask>();
-                screenPresenters.ForEach(screen => closeTasks.Add(screen.CloseViewAsync()));
-                await UniTask.WhenAll(closeTasks);
+                var listScreen = screenPresenters.ToList();
+                await UniTask.WhenAll(listScreen.Select(item => item.CloseViewAsync()));
             }
-
-            var presenter = await this.GetOrAddScreen<TPresenter>();
-            presenter.BindData(model);
-            return presenter;
         }
-
-        public UniTask CloseCurrentScreenAsync()
-        {
-            if (this.CurrentScreen != null) return this.CurrentScreen.CloseViewAsync();
-
-            LoggerService.Warning("Don't has any screen to close!");
-            return UniTask.CompletedTask;
-        }
-
-        public UniTask CloseAllScreenAsync()
-        {
-            var closeScreenTasks = new List<UniTask>();
-            foreach (var (_, listScreen) in this.orderLayerToScreenShow)
-            {
-                closeScreenTasks.AddRange(Enumerable.Select(listScreen, screen => screen.CloseViewAsync()));
-            }
-
-            return UniTask.WhenAll(closeScreenTasks);
-        }
-
-        public UniTask DestroyCurrentScreenAsync()
-        {
-            if (this.CurrentScreen != null) return this.CurrentScreen.DestroyViewAsync();
-
-            LoggerService.Warning("Don't has any screen to destroy!");
-            return UniTask.CompletedTask;
-        }
-
-        public UniTask DestroyAllScreenAsync()
-        {
-            var destroyViewTasks = new List<UniTask>();
-            foreach (var (_, listScreen) in this.orderLayerToScreenShow)
-            {
-                destroyViewTasks.AddRange(Enumerable.Select(listScreen, screen => screen.DestroyViewAsync()));
-            }
-
-            return UniTask.WhenAll(destroyViewTasks);
-        }
-
-        #endregion
 
         private async UniTask<TPresenter> GetOrAddScreen<TPresenter>(IUIView viewParam = null) where TPresenter : IScreenPresenter
         {
             var uiInfo = this.GetUIInfo<TPresenter>();
-            if (uiInfo == null)
-            {
-                throw new Exception($"Could not find screen with addressable id: {nameof(UIInfoAttribute)}");
-            }
+
+            if (uiInfo == null) throw new Exception($"Could not find screen with addressable id: {nameof(UIInfoAttribute)}");
 
             var hasCachedPresenter = this.cachedScreens.TryGetValue(uiInfo.AddressableId, out var outPresenter);
             var presenter = hasCachedPresenter
-                ? (TPresenter)outPresenter
-                : (TPresenter)VContainerExtensions.ContainerBuilder.Register<TPresenter>(Lifetime.Singleton).As().Build().SpawnInstance(this.resolver);
+                                ? (TPresenter)outPresenter
+                                : (TPresenter)VContainerExtensions.ContainerBuilder
+                                   .Register<TPresenter>(Lifetime.Singleton).As().Build().SpawnInstance(this.resolver);
 
             if (!hasCachedPresenter)
             {
@@ -233,6 +97,7 @@ namespace GameCore.Services.ScreenFlow
 
             this.CurrentScreen = presenter;
             await presenter.OpenViewAsync();
+
             return presenter;
         }
 
@@ -243,14 +108,168 @@ namespace GameCore.Services.ScreenFlow
 
         private UIInfoAttribute GetUIInfo(Type screenType)
         {
-            if (this.typeToUIInfo.TryGetValue(screenType, out var outUIInfo))
-            {
-                return outUIInfo;
-            }
+            if (this.typeToUIInfo.TryGetValue(screenType, out var outUIInfo)) return outUIInfo;
 
             var uiInfo = screenType.GetCustomAttribute<UIInfoAttribute>();
             this.typeToUIInfo.Add(screenType, uiInfo);
+
             return uiInfo;
         }
+
+#region Inject
+
+        private readonly IObjectResolver   resolver;
+        private readonly IGameAssetService gameAssetService;
+        private readonly IMessageService   messageService;
+
+#endregion
+
+#region Cache
+
+        private readonly Dictionary<uint, HashSet<IScreenPresenter>> orderLayerToScreenShow = new();
+        private readonly Dictionary<string, IScreenPresenter>        cachedScreens          = new();
+        private readonly Dictionary<Type, UIInfoAttribute>           typeToUIInfo           = new();
+
+#endregion
+
+#region Message
+
+        private void OnOpenSingleScene(OpenSingleSceneMessage message)
+        {
+        }
+
+        private void OnReleaseScene(ReleaseSceneMessage obj)
+        {
+        }
+
+        private void OnScreenInitialize(ScreenInitializeMessage message)
+        {
+        }
+
+        private void OnScreenOpened(ScreenOpenedMessage message)
+        {
+            if (message.ScreenPresenter == null) return;
+            var uiInfo = this.GetUIInfo(message.ScreenPresenter.GetType());
+
+            if (!this.orderLayerToScreenShow.TryGetValue(uiInfo.OrderLayer, out var listScreen))
+            {
+                this.orderLayerToScreenShow.Add(uiInfo.OrderLayer, new HashSet<IScreenPresenter> { message.ScreenPresenter });
+
+                return;
+            }
+
+            listScreen.Add(message.ScreenPresenter);
+        }
+
+        private void OnScreenClosed(ScreenClosedMessage message)
+        {
+            if (message.ScreenPresenter == null) return;
+            var uiInfo = this.GetUIInfo(message.ScreenPresenter.GetType());
+
+            if (!this.orderLayerToScreenShow.TryGetValue(uiInfo.OrderLayer, out var screens)) return;
+
+            if (!screens.Contains(message.ScreenPresenter)) return;
+
+            message.ScreenPresenter.SetParent(this.RootUIView.CloseLayerTransform);
+            screens.Remove(message.ScreenPresenter);
+        }
+
+        private void OnScreenDestroyed(ScreenDestroyedMessage message)
+        {
+        }
+
+#endregion
+
+#region IScreenFlowService
+
+        public RootUIView RootUIView { get; set; }
+
+        public IScreenPresenter CurrentScreen { get; private set; }
+
+        public async UniTask<TPresenter> InitScreenManually<TPresenter>() where TPresenter : IScreenPresenter
+        {
+            await UniTask.WaitUntil(() => this.RootUIView != null);
+            var view      = this.RootUIView.GetComponentInChildren<IUIView>();
+            var presenter = await this.GetOrAddScreen<TPresenter>(view);
+            presenter.BindData();
+
+            return presenter;
+        }
+
+        public async UniTask<TPresenter> InitScreenManually<TPresenter, TModel>(TModel model) where TPresenter : IScreenPresenter<TModel>
+        {
+            await UniTask.WaitUntil(() => this.RootUIView != null);
+            var view      = this.RootUIView.GetComponentInChildren<IUIView>();
+            var presenter = await this.GetOrAddScreen<TPresenter>(view);
+            presenter.BindData(model);
+
+            return presenter;
+        }
+
+        public async UniTask<TPresenter> OpenScreenAsync<TPresenter>(bool overlap = false) where TPresenter : IScreenPresenter
+        {
+            if (overlap)
+            {
+                var uiInfo = this.GetUIInfo<TPresenter>();
+                await this.CloseAllScreenWithOrder(uiInfo.OrderLayer);
+            }
+
+            var presenter = await this.GetOrAddScreen<TPresenter>();
+            presenter.BindData();
+
+            return presenter;
+        }
+
+        public async UniTask<TPresenter> OpenScreenAsync<TPresenter, TModel>(TModel model, bool overlap = false) where TPresenter : IScreenPresenter<TModel>
+        {
+            if (overlap)
+            {
+                var uiInfo = this.GetUIInfo<TPresenter>();
+                await this.CloseAllScreenWithOrder(uiInfo.OrderLayer);
+            }
+
+            var presenter = await this.GetOrAddScreen<TPresenter>();
+            presenter.BindData(model);
+
+            return presenter;
+        }
+
+        public UniTask CloseCurrentScreenAsync()
+        {
+            if (this.CurrentScreen != null) return this.CurrentScreen.CloseViewAsync();
+
+            LoggerService.Warning("Don't has any screen to close!");
+
+            return UniTask.CompletedTask;
+        }
+
+        public UniTask CloseAllScreenAsync()
+        {
+            var closeScreenTasks = new List<UniTask>();
+            foreach (var (_, listScreen) in this.orderLayerToScreenShow)
+                closeScreenTasks.AddRange(Enumerable.Select(listScreen, screen => screen.CloseViewAsync()));
+
+            return UniTask.WhenAll(closeScreenTasks);
+        }
+
+        public UniTask DestroyCurrentScreenAsync()
+        {
+            if (this.CurrentScreen != null) return this.CurrentScreen.DestroyViewAsync();
+
+            LoggerService.Warning("Don't has any screen to destroy!");
+
+            return UniTask.CompletedTask;
+        }
+
+        public UniTask DestroyAllScreenAsync()
+        {
+            var destroyViewTasks = new List<UniTask>();
+            foreach (var (_, listScreen) in this.orderLayerToScreenShow)
+                destroyViewTasks.AddRange(Enumerable.Select(listScreen, screen => screen.DestroyViewAsync()));
+
+            return UniTask.WhenAll(destroyViewTasks);
+        }
+
+#endregion
     }
 }

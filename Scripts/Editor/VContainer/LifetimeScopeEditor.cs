@@ -11,9 +11,8 @@ namespace GameCore.Editor.VContainer
     [CustomEditor(typeof(LifetimeScope))]
     public class LifetimeScopeEditor : Editor
     {
-        private LifetimeScope scope;
-
         private SerializedProperty autoInjectGameObjectsProps;
+        private LifetimeScope      scope;
 
         private void OnEnable()
         {
@@ -24,9 +23,9 @@ namespace GameCore.Editor.VContainer
         public override void OnInspectorGUI()
         {
             base.OnInspectorGUI();
+
             if (this.scope.IsRoot) return;
             if (this.autoInjectGameObjectsProps.isArray)
-            {
                 if (GUILayout.Button("Find Inject Object"))
                 {
                     this.autoInjectGameObjectsProps.ClearArray();
@@ -36,15 +35,20 @@ namespace GameCore.Editor.VContainer
                     foreach (var obj in allObjs)
                     {
                         var monoComponents = obj.GetComponents<MonoBehaviour>();
+
                         if (monoComponents.Length == 0) continue;
                         const BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.NonPublic;
                         foreach (var mono in monoComponents)
                         {
                             if (mono is LifetimeScope) continue;
-                            if (mono.GetType().GetFields(bindingFlags).Any(info => !info.GetCustomAttributes(typeof(InjectAttribute)).Any())) continue;
-                            if (mono.GetType().GetProperties(bindingFlags).Any(info => !info.GetCustomAttributes(typeof(InjectAttribute)).Any())) continue;
-                            if (mono.GetType().GetMethods(bindingFlags).Any(info => !info.GetCustomAttributes(typeof(InjectAttribute)).Any())) continue;
+                            if (mono.GetType().GetFields(bindingFlags)
+                               .Any(info => !info.GetCustomAttributes(typeof(InjectAttribute)).Any())) continue;
+                            if (mono.GetType().GetProperties(bindingFlags)
+                               .Any(info => !info.GetCustomAttributes(typeof(InjectAttribute)).Any())) continue;
+                            if (mono.GetType().GetMethods(bindingFlags)
+                               .Any(info => !info.GetCustomAttributes(typeof(InjectAttribute)).Any())) continue;
                             listAutoInjectObj.Add(mono.gameObject);
+
                             break;
                         }
                     }
@@ -58,7 +62,6 @@ namespace GameCore.Editor.VContainer
 
                     this.autoInjectGameObjectsProps.serializedObject.ApplyModifiedProperties();
                 }
-            }
         }
     }
 }

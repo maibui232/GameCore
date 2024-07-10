@@ -2,12 +2,14 @@ namespace GameCore.Services.ScreenFlow.Base
 {
     using System;
     using Cysharp.Threading.Tasks;
+    using UnityEngine;
 
     public interface IScreenPresenter : IDisposable
     {
         ScreenStatus ScreenStatus { get; }
         UniTask      BindData();
-        void         SetView(IUIView view);
+        void         SetParent(Transform parent);
+        void         SetView(IUIView     view);
         UniTask      InitView();
         void         OpenView();
         UniTask      OpenViewAsync();

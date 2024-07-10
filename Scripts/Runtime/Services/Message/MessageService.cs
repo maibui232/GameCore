@@ -7,17 +7,17 @@ namespace GameCore.Services.Message
 
     public interface IMessageService
     {
-        void Subscribe<TMessage>(Action callback);
-        void Subscribe<TMessage>(Action<TMessage> callback);
-        void TrySubscribe<TMessage>(Action callback);
+        void Subscribe<TMessage>(Action              callback);
+        void Subscribe<TMessage>(Action<TMessage>    callback);
+        void TrySubscribe<TMessage>(Action           callback);
         void TrySubscribe<TMessage>(Action<TMessage> callback);
 
-        void Unsubscribe<TMessage>(Action callback);
-        void Unsubscribe<TMessage>(Action<TMessage> callback);
-        void TryUnsubscribe<TMessage>(Action callback);
+        void Unsubscribe<TMessage>(Action              callback);
+        void Unsubscribe<TMessage>(Action<TMessage>    callback);
+        void TryUnsubscribe<TMessage>(Action           callback);
         void TryUnsubscribe<TMessage>(Action<TMessage> callback);
 
-        void Publish<TMessage>(TMessage message);
+        void Publish<TMessage>(TMessage    message);
         void TryPublish<TMessage>(TMessage message);
     }
 
@@ -25,15 +25,23 @@ namespace GameCore.Services.Message
     {
         private readonly Dictionary<(Type, Delegate), IDisposable> delegateToDisposable = new();
 
-        #region Inject
+#region Inject
 
         private readonly IObjectResolver resolver;
 
-        #endregion
+#endregion
 
         public MessageService(IObjectResolver resolver)
         {
             this.resolver = resolver;
+        }
+
+        public void Dispose()
+        {
+            this.resolver?.Dispose();
+            foreach (var (_, disposable) in this.delegateToDisposable) disposable.Dispose();
+
+            this.delegateToDisposable.Clear();
         }
 
         public void Subscribe<TMessage>(Action callback)
@@ -124,23 +132,18 @@ namespace GameCore.Services.Message
         private void InternalPublish<TMessage>(TMessage message)
         {
             if (this.resolver.TryResolve<IPublisher<TMessage>>(out var publisher))
-            {
                 publisher.Publish(message);
-            }
             else
-            {
                 throw new Exception($"Don't has message broker: {typeof(TMessage)}");
-            }
         }
 
         private void InternalSubscribe<TMessage>(Action callback)
         {
             if (callback == null) throw new ArgumentNullException();
             var key = (typeof(TMessage), callback);
+
             if (this.delegateToDisposable.TryGetValue(key, out _))
-            {
                 throw new Exception($"Subscribe message multiple time: {callback}");
-            }
 
             if (this.resolver.TryResolve<ISubscriber<TMessage>>(out var subscriber))
             {
@@ -157,10 +160,9 @@ namespace GameCore.Services.Message
         {
             if (callback == null) throw new ArgumentNullException();
             var key = (typeof(TMessage), callback);
+
             if (this.delegateToDisposable.TryGetValue(key, out _))
-            {
                 throw new Exception($"Subscribe message multiple time: {callback}");
-            }
 
             if (this.resolver.TryResolve<ISubscriber<TMessage>>(out var subscriber))
             {
@@ -177,10 +179,9 @@ namespace GameCore.Services.Message
         {
             if (callback == null) throw new ArgumentNullException();
             var key = (typeof(TMessage), callback);
+
             if (!this.delegateToDisposable.Remove(key, out var disposable))
-            {
                 throw new Exception($"Don's has subscribe for {callback}");
-            }
 
             disposable.Dispose();
         }
@@ -189,23 +190,11 @@ namespace GameCore.Services.Message
         {
             if (callback == null) throw new ArgumentNullException();
             var key = (typeof(TMessage), callback);
+
             if (!this.delegateToDisposable.Remove(key, out var disposable))
-            {
                 throw new Exception($"Don's has subscribe for {callback}");
-            }
 
             disposable.Dispose();
-        }
-
-        public void Dispose()
-        {
-            this.resolver?.Dispose();
-            foreach (var (_, disposable) in this.delegateToDisposable)
-            {
-                disposable.Dispose();
-            }
-
-            this.delegateToDisposable.Clear();
         }
     }
 }

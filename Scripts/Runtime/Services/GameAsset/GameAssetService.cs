@@ -8,9 +8,9 @@ namespace GameCore.Services.GameAsset
 
     public interface IGameAssetService
     {
-        AsyncOperationHandle<T> LoadAssetAsync<T>(object key) where T : Object;
-        void                    ReleaseAsset(object key);
-        void                    ReleaseAsset(AsyncOperationHandle asyncOperationHandle);
+        AsyncOperationHandle<T> LoadAssetAsync<T>(object                key) where T : Object;
+        void                    ReleaseAsset(object                     key);
+        void                    ReleaseAsset(AsyncOperationHandle       asyncOperationHandle);
         void                    ReleaseAsset<T>(AsyncOperationHandle<T> asyncOperationHandle);
     }
 
@@ -18,23 +18,22 @@ namespace GameCore.Services.GameAsset
     {
         private readonly Dictionary<object, AsyncOperationHandle> keyToCacheAsyncOperationHandle = new();
 
-        #region Load Asset
+#region Load Asset
 
         public AsyncOperationHandle<T> LoadAssetAsync<T>(object key) where T : Object
         {
             if (this.keyToCacheAsyncOperationHandle.TryGetValue(key, out var operationHandle))
-            {
                 return operationHandle.Convert<T>();
-            }
 
             var asyncOperationHandle = Addressables.LoadAssetAsync<T>(key);
             this.keyToCacheAsyncOperationHandle.Add(key, asyncOperationHandle);
+
             return asyncOperationHandle;
         }
 
-        #endregion
+#endregion
 
-        #region Release Asset
+#region Release Asset
 
         public void ReleaseAsset(object key)
         {
@@ -66,6 +65,6 @@ namespace GameCore.Services.GameAsset
             Addressables.Release(asyncOperationHandle);
         }
 
-        #endregion
+#endregion
     }
 }

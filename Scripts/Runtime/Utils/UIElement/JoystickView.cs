@@ -27,15 +27,15 @@ namespace GameCore.Utils.UIElement
         [SerializeField] private CanvasGroup  canvasGroup;
         [SerializeField] private Transform    joystickHolder;
         [SerializeField] private Transform    joystickHandle;
+        private                  Vector3      activeScreenPosition;
+
+        private Canvas        canvas;
+        private RectTransform canvasRect;
+        private Vector3       initialPosition;
 
         public Vector2       JoystickDirection { get;                      private set; }
         public JoystickState JoystickState     { get;                      private set; }
         public JoystickType  JoystickType      { get => this.joystickType; set => this.joystickType = value; }
-
-        private Canvas        canvas;
-        private RectTransform canvasRect;
-        private Vector3       activeScreenPosition;
-        private Vector3       initialPosition;
 
         private void Awake()
         {
@@ -45,14 +45,6 @@ namespace GameCore.Utils.UIElement
         private void OnEnable()
         {
             if (this.autoDisable) this.SetActiveView(false);
-        }
-
-        private void ValidateField()
-        {
-            this.canvasGroup     ??= this.GetComponent<CanvasGroup>();
-            this.canvas          = this.GetComponentInParent<Canvas>();
-            this.canvasRect      = this.canvas.GetComponent<RectTransform>();
-            this.initialPosition = this.joystickHandle.position;
         }
 
         public void OnPointerDown(PointerEventData eventData)
@@ -67,6 +59,24 @@ namespace GameCore.Utils.UIElement
             this.JoystickState           = JoystickState.Move;
         }
 
+        public void OnPointerMove(PointerEventData eventData)
+        {
+            if (this.JoystickState != JoystickState.Move) return;
+            switch (this.joystickType)
+            {
+                case JoystickType.Stable:
+                    this.OnUpdateStableJoystick();
+
+                    break;
+                case JoystickType.Movable:
+                    this.OnUpdateMovableJoystick();
+
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+
         public void OnPointerUp(PointerEventData eventData)
         {
             this.JoystickState = JoystickState.Up;
@@ -76,26 +86,18 @@ namespace GameCore.Utils.UIElement
             this.JoystickState           = JoystickState.Idle;
         }
 
+        private void ValidateField()
+        {
+            this.canvasGroup     ??= this.GetComponent<CanvasGroup>();
+            this.canvas          =   this.GetComponentInParent<Canvas>();
+            this.canvasRect      =   this.canvas.GetComponent<RectTransform>();
+            this.initialPosition =   this.joystickHandle.position;
+        }
+
         private void SetActiveView(bool isActive)
         {
             var alpha = isActive ? 1 : 0;
             this.canvasGroup.alpha = alpha;
-        }
-
-        public void OnPointerMove(PointerEventData eventData)
-        {
-            if (this.JoystickState != JoystickState.Move) return;
-            switch (this.joystickType)
-            {
-                case JoystickType.Stable:
-                    this.OnUpdateStableJoystick();
-                    break;
-                case JoystickType.Movable:
-                    this.OnUpdateMovableJoystick();
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
         }
 
         private void OnUpdateStableJoystick()
@@ -113,6 +115,7 @@ namespace GameCore.Utils.UIElement
             this.JoystickDirection = (Input.mousePosition - this.activeScreenPosition).normalized;
 
             this.joystickHandle.position = mousePosition;
+
             if (!(distance > this.radius)) return;
 
             this.activeScreenPosition    = Input.mousePosition - (Vector3)(this.JoystickDirection * this.radius);
@@ -122,6 +125,7 @@ namespace GameCore.Utils.UIElement
         private Vector3 GetInputUIPosition(Vector3 worldPosition)
         {
             var rootCanvas = this.canvas.isRootCanvas ? this.canvas : this.canvas.rootCanvas;
+
             if (rootCanvas.worldCamera == null) return worldPosition;
 
             switch (rootCanvas.renderMode)
@@ -130,6 +134,7 @@ namespace GameCore.Utils.UIElement
                     return worldPosition;
                 case RenderMode.ScreenSpaceCamera:
                     RectTransformUtility.ScreenPointToWorldPointInRectangle(this.canvasRect, worldPosition, this.canvas.worldCamera, out var position);
+
                     return position;
                 case RenderMode.WorldSpace:
                     break;
