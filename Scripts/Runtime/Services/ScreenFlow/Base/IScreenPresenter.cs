@@ -17,6 +17,8 @@ namespace GameCore.Services.ScreenFlow.Base
         UniTask      CloseViewAsync();
         void         DestroyView();
         UniTask      DestroyViewAsync();
+        void         ShowView();
+        void         HideView();
     }
 
     public interface IScreenPresenter<TModel> : IScreenPresenter
@@ -28,6 +30,7 @@ namespace GameCore.Services.ScreenFlow.Base
     public enum ScreenStatus
     {
         Open,
-        Close
+        Close,
+        Hide
     }
 }

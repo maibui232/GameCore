@@ -1,20 +1,19 @@
 namespace GameCore.Services.ScreenFlow.Base
 {
     using Cysharp.Threading.Tasks;
-    using GameCore.Services.Logger;
     using GameCore.Services.ScreenFlow.MVP;
     using GameCore.Utils.UIElement;
     using UnityEngine;
 
     public interface IUIView : IView
     {
-        void ShowView();
-        void HideView();
-        void OpenView();
+        void    ShowView();
+        void    HideView();
+        void    OpenView();
         UniTask OpenViewAsync();
-        void CloseView();
+        void    CloseView();
         UniTask CloseViewAsync();
-        void DestroyView();
+        void    DestroyView();
     }
 
     [RequireComponent(typeof(CanvasGroup)), RequireComponent(typeof(UITransition))]
@@ -93,8 +92,8 @@ namespace GameCore.Services.ScreenFlow.Base
 
         public void HideView()
         {
-            this.canvasGroup.alpha          = 0;
             this.canvasGroup.blocksRaycasts = false;
+            this.canvasGroup.alpha          = 0;
         }
 
         public void OpenView()

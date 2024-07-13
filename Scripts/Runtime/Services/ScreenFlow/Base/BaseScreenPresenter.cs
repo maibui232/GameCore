@@ -76,7 +76,7 @@ namespace GameCore.Services.ScreenFlow.Base
         public async UniTask CloseViewAsync()
         {
             await UniTask.WhenAll(this.OnViewCloseAsync(), this.View.CloseViewAsync());
-            this.ScreenStatus = ScreenStatus.Open;
+            this.ScreenStatus = ScreenStatus.Close;
             this.MessageService.Publish(this.screenClosedMessage);
         }
 
@@ -90,6 +90,18 @@ namespace GameCore.Services.ScreenFlow.Base
             this.MessageService.Publish(this.screenDestroyedMessage);
             await this.OnViewDestroyAsync();
             this.View.DestroyView();
+        }
+
+        public void ShowView()
+        {
+            this.View.ShowView();
+            this.ScreenStatus = ScreenStatus.Open;
+        }
+
+        public void HideView()
+        {
+            this.View.HideView();
+            this.ScreenStatus = ScreenStatus.Hide;
         }
 
         public virtual void Dispose()
