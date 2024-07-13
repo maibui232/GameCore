@@ -10,18 +10,10 @@ namespace GameCore.Editor.Utils
     using UnityEngine.SceneManagement;
     using Object = UnityEngine.Object;
 
-    public static class PrefabAndConfigCreatorEditor
+    public static class VContainerContextCreatorEditor
     {
         private static string ProjectContextPath     => $"Assets/Resources/Config/{nameof(ProjectContext)}.prefab";
         private static string VContainerSettingsPath => $"Assets/Resources/Config/{nameof(VContainerSettings)}.asset";
-
-        [MenuItem("GameObject/UI/JoystickView")]
-        public static void CreateJoystick()
-        {
-            var selectedObj = Selection.activeGameObject;
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Packages/game.core/Prefabs/UISamples/JoystickView.prefab");
-            PrefabUtility.InstantiatePrefab(prefab, selectedObj.transform);
-        }
 
         [MenuItem("GameObject/UI/RootUIView")]
         public static void CreateRootUIView()

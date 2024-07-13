@@ -4,7 +4,7 @@ namespace GameCore.Services.ScreenFlow.Base
     using GameCore.Services.Message;
     using UnityEngine;
 
-    public abstract class BaseScreenPresenter<TView> : IScreenPresenter where TView : BaseUIView
+    public abstract class BaseScreenPresenter<TView> : IScreenPresenter where TView : BaseView
     {
         #region Inject
 
@@ -133,7 +133,7 @@ namespace GameCore.Services.ScreenFlow.Base
         #endregion
     }
 
-    public abstract class BaseScreenPresenter<TView, TModel> : BaseScreenPresenter<TView>, IScreenPresenter<TModel> where TView : BaseUIView
+    public abstract class BaseScreenPresenter<TView, TModel> : BaseScreenPresenter<TView>, IScreenPresenter<TModel> where TView : BaseView
     {
         protected BaseScreenPresenter(IMessageService messageService) : base(messageService)
         {

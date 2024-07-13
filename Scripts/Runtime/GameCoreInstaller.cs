@@ -2,6 +2,7 @@ namespace GameCore
 {
     using GameCore.Extensions.VContainer;
     using GameCore.Extensions.VContainer.Installer;
+    using GameCore.Services.Audio;
     using GameCore.Services.GameAsset;
     using GameCore.Services.LocalData;
     using GameCore.Services.Message;
@@ -21,6 +22,7 @@ namespace GameCore
             builder.Register<GameAssetService>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<LocalDataService>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<ObjectPoolService>(Lifetime.Singleton).AsImplementedInterfaces();
+            builder.Register<AudioService>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<SceneFlowService>(Lifetime.Singleton).AsImplementedInterfaces();
             builder.Register<ScreenFlowService>(Lifetime.Singleton).AsImplementedInterfaces();
         }

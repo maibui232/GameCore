@@ -17,7 +17,7 @@ namespace GameCore.Services.ScreenFlow.Base
     }
 
     [RequireComponent(typeof(CanvasGroup)), RequireComponent(typeof(UITransition))]
-    public abstract class BaseUIView : MonoBehaviour, IUIView
+    public abstract class BaseView : MonoBehaviour, IUIView
     {
 #region Field
 
