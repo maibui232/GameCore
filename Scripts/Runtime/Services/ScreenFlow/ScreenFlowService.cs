@@ -55,10 +55,10 @@ namespace GameCore.Services.ScreenFlow
             this.messageService.Subscribe<ScreenDestroyedMessage>(this.OnScreenDestroyed);
         }
 
-        private void HideAllScreenIfOverlap(UIInfoAttribute uiInfo)
+        private void HideAllScreenIfOverlap(ScreenInfoAttribute screenInfo)
         {
-            if (uiInfo.Overlap) return;
-            if (!this.orderLayerToScreenShow.TryGetValue(uiInfo.OrderLayer, out var screenPresenters)) return;
+            if (screenInfo.Overlap) return;
+            if (!this.orderLayerToScreenShow.TryGetValue(screenInfo.OrderLayer, out var screenPresenters)) return;
 
             foreach (var screen in screenPresenters)
             {
@@ -70,7 +70,7 @@ namespace GameCore.Services.ScreenFlow
         {
             var uiInfo = this.GetUIInfo<TPresenter>();
 
-            if (uiInfo == null) throw new Exception($"Could not find screen with addressable id: {nameof(UIInfoAttribute)}");
+            if (uiInfo == null) throw new Exception($"Could not find screen with addressable id: {nameof(ScreenInfoAttribute)}");
 
             this.HideAllScreenIfOverlap(uiInfo);
 
@@ -79,7 +79,7 @@ namespace GameCore.Services.ScreenFlow
                                 ? (TPresenter)outPresenter
                                 : (TPresenter)VContainerExtensions.ContainerBuilder.Register<TPresenter>(Lifetime.Singleton).As().Build().SpawnInstance(this.resolver);
 
-            var parent = this.RootUIView.GetOrCreateOverlayCanvas((int)uiInfo.OrderLayer).transform;
+            var parent = this.RootUIView.GetOrCreateOverlayCanvas(uiInfo.OrderLayer).transform;
             if (!hasCachedPresenter)
             {
                 this.cachedScreens.Add(uiInfo.AddressableId, presenter);
@@ -97,16 +97,16 @@ namespace GameCore.Services.ScreenFlow
             return presenter;
         }
 
-        private UIInfoAttribute GetUIInfo<TPresenter>() where TPresenter : IScreenPresenter
+        private ScreenInfoAttribute GetUIInfo<TPresenter>() where TPresenter : IScreenPresenter
         {
             return this.GetUIInfo(typeof(TPresenter));
         }
 
-        private UIInfoAttribute GetUIInfo(Type screenType)
+        private ScreenInfoAttribute GetUIInfo(Type screenType)
         {
             if (this.typeToUIInfo.TryGetValue(screenType, out var outUIInfo)) return outUIInfo;
 
-            var uiInfo = screenType.GetCustomAttribute<UIInfoAttribute>();
+            var uiInfo = screenType.GetCustomAttribute<ScreenInfoAttribute>();
             this.typeToUIInfo.Add(screenType, uiInfo);
 
             return uiInfo;
@@ -122,9 +122,9 @@ namespace GameCore.Services.ScreenFlow
 
 #region Cache
 
-        private readonly Dictionary<uint, HashSet<IScreenPresenter>> orderLayerToScreenShow = new();
-        private readonly Dictionary<string, IScreenPresenter>        cachedScreens          = new();
-        private readonly Dictionary<Type, UIInfoAttribute>           typeToUIInfo           = new();
+        private readonly Dictionary<OrderLayer, HashSet<IScreenPresenter>> orderLayerToScreenShow = new();
+        private readonly Dictionary<string, IScreenPresenter>                    cachedScreens          = new();
+        private readonly Dictionary<Type, ScreenInfoAttribute>                   typeToUIInfo           = new();
 
 #endregion
 

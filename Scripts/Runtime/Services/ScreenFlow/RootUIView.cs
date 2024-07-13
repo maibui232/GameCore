@@ -1,6 +1,7 @@
 namespace GameCore.Services.ScreenFlow
 {
     using System.Collections.Generic;
+    using GameCore.Attribute;
     using UnityEngine;
     using VContainer;
 
@@ -12,7 +13,7 @@ namespace GameCore.Services.ScreenFlow
         [SerializeField] private Canvas    defaultLayerCanvas;
         [SerializeField] private Transform closeLayerTransform;
 
-        private readonly Dictionary<int, Canvas> orderToLayerCanvas = new();
+        private readonly Dictionary<OrderLayer, Canvas> orderToLayerCanvas = new();
 
         public Camera    UICamera            => this.uiCamera;
         public Canvas    RootCanvas          => this.rootCanvas;
@@ -39,7 +40,7 @@ namespace GameCore.Services.ScreenFlow
             screenFlowService.RootUIView = this;
         }
 
-        public Canvas GetOrCreateOverlayCanvas(int orderLayer)
+        public Canvas GetOrCreateOverlayCanvas(OrderLayer orderLayer)
         {
             if (this.orderToLayerCanvas.TryGetValue(orderLayer, out var overlayCanvas)) return overlayCanvas;
 
@@ -49,11 +50,11 @@ namespace GameCore.Services.ScreenFlow
             return canvas;
         }
 
-        private void AddCanvas(int orderLayer, Canvas canvas)
+        private void AddCanvas(OrderLayer orderLayer, Canvas canvas)
         {
             canvas.gameObject.name = $"LayerCanvas-{orderLayer}";
             canvas.overrideSorting = true;
-            canvas.sortingOrder    = orderLayer;
+            canvas.sortingOrder    = (int)orderLayer;
             this.orderToLayerCanvas.Add(orderLayer, canvas);
         }
     }
