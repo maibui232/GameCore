@@ -1,23 +1,11 @@
-namespace GameCore.Services.ScreenFlow.Base
+namespace GameCore.Services.ScreenFlow.Base.Screen
 {
     using Cysharp.Threading.Tasks;
-    using GameCore.Services.ScreenFlow.MVP;
     using GameCore.Utils.UIElement;
     using UnityEngine;
 
-    public interface IUIView : IView
-    {
-        void    ShowView();
-        void    HideView();
-        void    OpenView();
-        UniTask OpenViewAsync();
-        void    CloseView();
-        UniTask CloseViewAsync();
-        void    DestroyView();
-    }
-
     [RequireComponent(typeof(CanvasGroup)), RequireComponent(typeof(UITransition))]
-    public abstract class BaseView : MonoBehaviour, IUIView
+    public abstract class BaseScreenView : MonoBehaviour, IScreenView
     {
 #region Field
 

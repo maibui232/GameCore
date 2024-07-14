@@ -3,6 +3,7 @@ namespace GameCore.Extensions.VContainer
     using System.Collections.Generic;
     using GameCore.Services.ScreenFlow;
     using GameCore.Services.ScreenFlow.Base;
+    using GameCore.Services.ScreenFlow.Base.Screen;
     using global::VContainer;
     using MessagePipe;
 

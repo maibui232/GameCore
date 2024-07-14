@@ -1,6 +1,7 @@
 namespace GameCore.Services.ScreenFlow
 {
     using GameCore.Services.ScreenFlow.Base;
+    using GameCore.Services.ScreenFlow.Base.Screen;
 
     public class ScreenInitializeMessage
     {

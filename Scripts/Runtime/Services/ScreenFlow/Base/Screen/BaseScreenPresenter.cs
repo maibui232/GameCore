@@ -1,25 +1,26 @@
-namespace GameCore.Services.ScreenFlow.Base
+namespace GameCore.Services.ScreenFlow.Base.Screen
 {
     using Cysharp.Threading.Tasks;
     using GameCore.Services.Message;
+    using GameCore.Services.ScreenFlow.MVP;
     using UnityEngine;
 
-    public abstract class BaseScreenPresenter<TView> : IScreenPresenter where TView : BaseView
+    public abstract class BaseScreenPresenter<TView> : IScreenPresenter where TView : BaseScreenView
     {
-        #region Inject
+#region Inject
 
         protected readonly IMessageService MessageService;
 
-        #endregion
+#endregion
 
-        #region Cache
+#region Cache
 
         private ScreenInitializeMessage screenInitializeMessage;
         private ScreenOpenedMessage     screenOpenedMessage;
         private ScreenClosedMessage     screenClosedMessage;
         private ScreenDestroyedMessage  screenDestroyedMessage;
 
-        #endregion
+#endregion
 
         protected BaseScreenPresenter(IMessageService messageService)
         {
@@ -31,7 +32,7 @@ namespace GameCore.Services.ScreenFlow.Base
             this.MessageService = messageService;
         }
 
-        protected TView View { get; private set; }
+        protected TView View { get; set; }
 
         public void SetParent(Transform parent)
         {
@@ -41,7 +42,7 @@ namespace GameCore.Services.ScreenFlow.Base
             }
         }
 
-        public void SetView(IUIView view)
+        public void SetView(IScreenView view)
         {
             this.View = view as TView;
         }
@@ -52,7 +53,7 @@ namespace GameCore.Services.ScreenFlow.Base
             await this.OnViewInitAsync();
         }
 
-        public ScreenStatus ScreenStatus { get; private set; }
+        public ViewStatus ViewStatus { get; private set; }
 
         public abstract UniTask BindData();
 
@@ -64,7 +65,7 @@ namespace GameCore.Services.ScreenFlow.Base
         public async UniTask OpenViewAsync()
         {
             await UniTask.WhenAll(this.OnViewOpenAsync(), this.View.OpenViewAsync());
-            this.ScreenStatus = ScreenStatus.Open;
+            this.ViewStatus = ViewStatus.Open;
             this.MessageService.Publish(this.screenOpenedMessage);
         }
 
@@ -76,7 +77,7 @@ namespace GameCore.Services.ScreenFlow.Base
         public async UniTask CloseViewAsync()
         {
             await UniTask.WhenAll(this.OnViewCloseAsync(), this.View.CloseViewAsync());
-            this.ScreenStatus = ScreenStatus.Close;
+            this.ViewStatus = ViewStatus.Close;
             this.MessageService.Publish(this.screenClosedMessage);
         }
 
@@ -95,20 +96,20 @@ namespace GameCore.Services.ScreenFlow.Base
         public void ShowView()
         {
             this.View.ShowView();
-            this.ScreenStatus = ScreenStatus.Open;
+            this.ViewStatus = ViewStatus.Open;
         }
 
         public void HideView()
         {
             this.View.HideView();
-            this.ScreenStatus = ScreenStatus.Hide;
+            this.ViewStatus = ViewStatus.Hide;
         }
 
         public virtual void Dispose()
         {
         }
 
-        #region Screen Event
+#region Screen Event
 
         protected virtual UniTask OnViewInitAsync()
         {
@@ -130,10 +131,10 @@ namespace GameCore.Services.ScreenFlow.Base
             return UniTask.CompletedTask;
         }
 
-        #endregion
+#endregion
     }
 
-    public abstract class BaseScreenPresenter<TView, TModel> : BaseScreenPresenter<TView>, IScreenPresenter<TModel> where TView : BaseView
+    public abstract class BaseScreenPresenter<TView, TModel> : BaseScreenPresenter<TView>, IScreenPresenter<TModel> where TView : BaseScreenView
     {
         protected BaseScreenPresenter(IMessageService messageService) : base(messageService)
         {

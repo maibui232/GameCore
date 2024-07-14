@@ -12,6 +12,7 @@ namespace GameCore.Services.ScreenFlow
     using GameCore.Services.Message;
     using GameCore.Services.SceneFlow;
     using GameCore.Services.ScreenFlow.Base;
+    using GameCore.Services.ScreenFlow.Base.Screen;
     using UnityEngine;
     using VContainer;
     using VContainer.Unity;
@@ -66,7 +67,7 @@ namespace GameCore.Services.ScreenFlow
             }
         }
 
-        private async UniTask<TPresenter> GetOrAddScreen<TPresenter>(IUIView viewParam = null) where TPresenter : IScreenPresenter
+        private async UniTask<TPresenter> GetOrAddScreen<TPresenter>(IScreenView viewParam = null) where TPresenter : IScreenPresenter
         {
             var uiInfo = this.GetUIInfo<TPresenter>();
 
@@ -84,7 +85,7 @@ namespace GameCore.Services.ScreenFlow
             {
                 this.cachedScreens.Add(uiInfo.AddressableId, presenter);
                 var prefab = await this.gameAssetService.LoadAssetAsync<GameObject>(uiInfo.AddressableId);
-                var view   = viewParam ?? this.resolver.Instantiate(prefab, parent).GetComponent<IUIView>();
+                var view   = viewParam ?? this.resolver.Instantiate(prefab, parent).GetComponent<IScreenView>();
 
                 presenter.SetView(view);
                 presenter.InitView();
@@ -188,7 +189,7 @@ namespace GameCore.Services.ScreenFlow
         public async UniTask<TPresenter> InitScreenManually<TPresenter>() where TPresenter : IScreenPresenter
         {
             await UniTask.WaitUntil(() => this.RootUIView != null);
-            var view      = this.RootUIView.GetComponentInChildren<IUIView>();
+            var view      = this.RootUIView.GetComponentInChildren<IScreenView>();
             var presenter = await this.GetOrAddScreen<TPresenter>(view);
             presenter.BindData();
 
@@ -198,7 +199,7 @@ namespace GameCore.Services.ScreenFlow
         public async UniTask<TPresenter> InitScreenManually<TPresenter, TModel>(TModel model) where TPresenter : IScreenPresenter<TModel>
         {
             await UniTask.WaitUntil(() => this.RootUIView != null);
-            var view      = this.RootUIView.GetComponentInChildren<IUIView>();
+            var view      = this.RootUIView.GetComponentInChildren<IScreenView>();
             var presenter = await this.GetOrAddScreen<TPresenter>(view);
             presenter.BindData(model);
 
