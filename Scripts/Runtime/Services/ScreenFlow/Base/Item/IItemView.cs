@@ -5,4 +5,8 @@ namespace GameCore.Services.ScreenFlow.Base.Item
     public interface IItemView : IUIView
     {
     }
+
+    public abstract class BaseItemView : BaseUIView, IItemView
+    {
+    }
 }

@@ -5,4 +5,8 @@ namespace GameCore.Services.ScreenFlow.Base.Screen
     public interface IScreenView : IUIView
     {
     }
+
+    public abstract class BaseScreenView : BaseUIView, IScreenView
+    {
+    }
 }
