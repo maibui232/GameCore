@@ -33,7 +33,7 @@ namespace GameCore.Services.ObjectPool
                 this.cachedObjs.Add(prefab);
             }
 
-            LoggerService.Log($"Create Pool: {this.name}, size: {size}");
+            LoggerUtils.Log($"Create Pool: {this.name}, size: {size}");
         }
 
         public GameObject Spawn(GameObject prefab, Transform parent)
@@ -58,13 +58,13 @@ namespace GameCore.Services.ObjectPool
         {
             if (this.cachedObjs.Contains(obj))
             {
-                LoggerService.Error($"{obj.name} has been recycled!");
+                LoggerUtils.Error($"{obj.name} has been recycled!");
                 return;
             }
 
             if (!this.spawnedObjs.Contains(obj))
             {
-                LoggerService.Error($"{obj.name} does not contain in {this.name}");
+                LoggerUtils.Error($"{obj.name} does not contain in {this.name}");
                 return;
             }
 
@@ -82,7 +82,7 @@ namespace GameCore.Services.ObjectPool
             }
 
             this.spawnedObjs.Clear();
-            LoggerService.Log($"Recycle all: {this.name}", Color.green);
+            LoggerUtils.Log($"Recycle all: {this.name}", Color.green);
         }
 
         public void CleanUp(bool cleanUpAll = true)
@@ -103,7 +103,7 @@ namespace GameCore.Services.ObjectPool
             }
 
             this.cachedObjs.Clear();
-            LoggerService.Log($"Clean Up: {this.name}", Color.green);
+            LoggerUtils.Log($"Clean Up: {this.name}", Color.green);
         }
 
         private void ResetTransformObj(GameObject obj)

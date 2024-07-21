@@ -4,7 +4,7 @@ namespace GameCore.Services.Logger
     using UnityEngine;
     using Debug = UnityEngine.Debug;
 
-    public static class LoggerService
+    public static class LoggerUtils
     {
         private static string ToHtmlStringRbg(Color color)
         {

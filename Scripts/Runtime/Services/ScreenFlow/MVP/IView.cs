@@ -1,7 +1,7 @@
 namespace GameCore.Services.ScreenFlow.MVP
 {
     using Cysharp.Threading.Tasks;
-    using GameCore.Utils.UIElement;
+    using GameCore.Services.ScreenFlow.UIElement;
     using UnityEngine;
 
     public interface IView

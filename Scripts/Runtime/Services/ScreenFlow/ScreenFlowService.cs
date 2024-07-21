@@ -226,7 +226,7 @@ namespace GameCore.Services.ScreenFlow
         {
             if (this.CurrentScreen != null) return this.CurrentScreen.CloseViewAsync();
 
-            LoggerService.Warning("Don't has any screen to close!");
+            LoggerUtils.Warning("Don't has any screen to close!");
 
             return UniTask.CompletedTask;
         }
@@ -246,7 +246,7 @@ namespace GameCore.Services.ScreenFlow
         {
             if (this.CurrentScreen != null) return this.CurrentScreen.DestroyViewAsync();
 
-            LoggerService.Warning("Don't has any screen to destroy!");
+            LoggerUtils.Warning("Don't has any screen to destroy!");
 
             return UniTask.CompletedTask;
         }

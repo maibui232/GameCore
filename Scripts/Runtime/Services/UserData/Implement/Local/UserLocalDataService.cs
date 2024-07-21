@@ -1,23 +1,16 @@
-namespace GameCore.Services.UserData
+namespace GameCore.Services.UserData.Implement.Local
 {
     using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Reflection;
+    using Cysharp.Threading.Tasks;
     using GameCore.Services.Logger;
     using GameCore.Services.UserData.Interface;
     using Newtonsoft.Json;
     using UnityEngine;
 
-    public interface ILocalDataService
-    {
-        void Save<T>() where T : IUserData;
-        void Load<T>() where T : IUserData;
-        void SaveAll();
-        void LoadAll();
-    }
-
-    public class UserDataService : ILocalDataService
+    public class UserUserDataService : IUserDataService
     {
         private const string LocalDataPrefixKey = "LD_";
 
@@ -27,7 +20,7 @@ namespace GameCore.Services.UserData
 
 #endregion
 
-        public UserDataService
+        public UserUserDataService
         (
             IEnumerable<IUserData> localDataEnumerable
         )
@@ -35,24 +28,24 @@ namespace GameCore.Services.UserData
             this.typeToLocalDataCache = localDataEnumerable.ToDictionary(x => x.GetType(), x => x);
         }
 
-        public void Save<T>() where T : IUserData
+        public UniTask Save<T>() where T : IUserData
         {
-            this.InternalSave(typeof(T));
+            return this.InternalSave(typeof(T));
         }
 
-        public void Load<T>() where T : IUserData
+        public UniTask Load<T>() where T : IUserData
         {
-            this.InternalLoad(typeof(T));
+            return this.InternalLoad(typeof(T));
         }
 
-        public void SaveAll()
+        public UniTask SaveAll()
         {
-            foreach (var (key, value) in this.typeToLocalDataCache) this.InternalSave(key);
+            return UniTask.WhenAll(this.typeToLocalDataCache.Select(pair => this.InternalSave(pair.Key)));
         }
 
-        public void LoadAll()
+        public UniTask LoadAll()
         {
-            foreach (var (key, value) in this.typeToLocalDataCache) this.InternalLoad(key);
+            return UniTask.WhenAll(this.typeToLocalDataCache.Select(pair => this.InternalLoad(pair.Key)));
         }
 
         private string GetLocalDataKey(MemberInfo type)
@@ -60,42 +53,46 @@ namespace GameCore.Services.UserData
             return $"{LocalDataPrefixKey}{type.Name}";
         }
 
-        private void InternalSave(Type type)
+        private UniTask InternalSave(Type type)
         {
             if (!this.typeToLocalDataCache.TryGetValue(type, out var data))
             {
-                LoggerService.Error($"Doesn't contain or implement type: {type.Name} in {this.GetType().Name}");
+                LoggerUtils.Error($"Doesn't contain or implement type: {type.Name} in {this.GetType().Name}");
 
-                return;
+                return UniTask.CompletedTask;
             }
 
             var jsonData = JsonConvert.SerializeObject(data);
             PlayerPrefs.SetString(this.GetLocalDataKey(type), jsonData);
-            LoggerService.Log($"Save: {this.GetLocalDataKey(type)}", Color.green);
+            LoggerUtils.Log($"UserLocalData Save: {this.GetLocalDataKey(type)}", Color.green);
+
+            return UniTask.CompletedTask;
         }
 
-        private void InternalLoad(Type type)
+        private UniTask InternalLoad(Type type)
         {
             if (!this.typeToLocalDataCache.TryGetValue(type, out _))
             {
-                LoggerService.Error($"Doesn't contain or implement type: {type.Name} in {this.GetType().Name}");
+                LoggerUtils.Error($"Doesn't contain or implement type: {type.Name} in {this.GetType().Name}");
 
-                return;
+                return UniTask.CompletedTask;
             }
 
             if (!PlayerPrefs.HasKey(this.GetLocalDataKey(type)))
             {
                 this.typeToLocalDataCache[type].Init();
 
-                return;
+                return UniTask.CompletedTask;
             }
 
             var jsonData = PlayerPrefs.GetString(this.GetLocalDataKey(type));
             var data     = JsonConvert.DeserializeObject(jsonData, type);
 
-            if (data is not IUserData d) return;
+            if (data is not IUserData d) return UniTask.CompletedTask;
             this.typeToLocalDataCache[type] = d;
-            LoggerService.Log($"Load: {this.GetLocalDataKey(type)}", Color.green);
+            LoggerUtils.Log($"UserLocalData Load: {this.GetLocalDataKey(type)}", Color.green);
+
+            return UniTask.CompletedTask;
         }
     }
 }

@@ -80,7 +80,7 @@ namespace GameCore.Services.ObjectPool
         {
             if (this.prefabToPoolable.TryGetValue(prefab, out var pool))
             {
-                LoggerService.Error($"{pool.name} already create!");
+                LoggerUtils.Error($"{pool.name} already create!");
 
                 return pool;
             }

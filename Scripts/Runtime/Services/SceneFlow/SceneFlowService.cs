@@ -50,7 +50,7 @@ namespace GameCore.Services.SceneFlow
             this.openSingleSceneMessage.SceneName = sceneName;
             this.messageService.Publish(this.openSingleSceneMessage);
 
-            LoggerService.Log($"Load new single scene: {sceneInstance.Scene.name}", Color.magenta);
+            LoggerUtils.Log($"Load new single scene: {sceneInstance.Scene.name}", Color.magenta);
             this.MainActiveScene = sceneInstance;
 
             return sceneInstance;
@@ -62,7 +62,7 @@ namespace GameCore.Services.SceneFlow
             this.openAdditiveSceneMessage.SceneName = sceneName;
             this.messageService.Publish(this.openAdditiveSceneMessage);
 
-            LoggerService.Log($"Load new additive scene: {sceneInstance.Scene.name}", Color.magenta);
+            LoggerUtils.Log($"Load new additive scene: {sceneInstance.Scene.name}", Color.magenta);
             this.OverlayScene.Add(sceneInstance);
 
             return sceneInstance;
@@ -76,7 +76,7 @@ namespace GameCore.Services.SceneFlow
             this.releaseSceneMessage.SceneName = sceneInstance.Scene.name;
             this.messageService.Publish(this.releaseSceneMessage);
 
-            LoggerService.Log($"Release scene: {sceneInstance.Scene.name}", Color.magenta);
+            LoggerUtils.Log($"Release scene: {sceneInstance.Scene.name}", Color.magenta);
 
             return Addressables.UnloadSceneAsync(sceneInstance, UnloadSceneOptions.UnloadAllEmbeddedSceneObjects,
                                                  autoReleaseAsset);
