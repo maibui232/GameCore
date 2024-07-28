@@ -1,8 +1,10 @@
 namespace GameCore.Extensions.VContainer
 {
+    using System;
     using System.Collections.Generic;
+    using System.Linq;
+    using System.Reflection;
     using GameCore.Services.ScreenFlow;
-    using GameCore.Services.ScreenFlow.Base;
     using GameCore.Services.ScreenFlow.Base.Screen;
     using global::VContainer;
     using MessagePipe;
@@ -27,6 +29,24 @@ namespace GameCore.Extensions.VContainer
         public static void InitScreenManually<TPresenter, TModel>(this IContainerBuilder builder, TModel model) where TPresenter : IScreenPresenter<TModel>
         {
             builder.RegisterBuildCallback(resolver => resolver.Resolve<IScreenFlowService>().InitScreenManually<TPresenter, TModel>(model));
+        }
+
+        public static T InstantiateConcrete<T>(this IObjectResolver resolver)
+        {
+            var ctors = typeof(T).GetConstructors();
+            switch (ctors.Length)
+            {
+                case > 1:
+                    throw new Exception($"{typeof(T).Name} need to implement only 1 constructor");
+                case 0:
+                    return Activator.CreateInstance<T>();
+            }
+            
+            var ctor      = ctors[0];
+            var arguments = ctor.GetParameters().Select(param => resolver.Resolve(param.ParameterType)).ToArray();
+            var instance  = Activator.CreateInstance(typeof(T), arguments);
+            
+            return (T)instance;
         }
     }
 }

@@ -78,7 +78,7 @@ namespace GameCore.Services.ScreenFlow
             var hasCachedPresenter = this.cachedScreens.TryGetValue(uiInfo.AddressableId, out var outPresenter);
             var presenter = hasCachedPresenter
                                 ? (TPresenter)outPresenter
-                                : (TPresenter)VContainerExtensions.ContainerBuilder.Register<TPresenter>(Lifetime.Singleton).As().Build().SpawnInstance(this.resolver);
+                                : this.resolver.InstantiateConcrete<TPresenter>();
 
             var parent = this.RootUIView.GetOrCreateOverlayCanvas(uiInfo.OrderLayer).transform;
             if (!hasCachedPresenter)

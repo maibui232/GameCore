@@ -11,6 +11,7 @@ namespace GameCore.Extensions.VContainer
         protected override void Configure(IContainerBuilder builder)
         {
             base.Configure(builder);
+            VContainerExtensions.ContainerBuilder = builder;
             this.scopeConfig.InstallBinding(builder);
         }
     }
