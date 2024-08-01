@@ -84,8 +84,12 @@ namespace GameCore.Services.ScreenFlow
             if (!hasCachedPresenter)
             {
                 this.cachedScreens.Add(uiInfo.AddressableId, presenter);
-                var prefab = await this.gameAssetService.LoadAssetAsync<GameObject>(uiInfo.AddressableId);
-                var view   = viewParam ?? this.resolver.Instantiate(prefab, parent).GetComponent<IScreenView>();
+                var view = viewParam;
+                if (view == null)
+                {
+                    var prefab = await this.gameAssetService.LoadAssetAsync<GameObject>(uiInfo.AddressableId);
+                    view = this.resolver.Instantiate(prefab, parent).GetComponent<IScreenView>();
+                }
 
                 presenter.SetView(view);
                 presenter.InitView();
@@ -124,8 +128,8 @@ namespace GameCore.Services.ScreenFlow
 #region Cache
 
         private readonly Dictionary<OrderLayer, HashSet<IScreenPresenter>> orderLayerToScreenShow = new();
-        private readonly Dictionary<string, IScreenPresenter>                    cachedScreens          = new();
-        private readonly Dictionary<Type, ScreenInfoAttribute>                   typeToUIInfo           = new();
+        private readonly Dictionary<string, IScreenPresenter>              cachedScreens          = new();
+        private readonly Dictionary<Type, ScreenInfoAttribute>             typeToUIInfo           = new();
 
 #endregion
 

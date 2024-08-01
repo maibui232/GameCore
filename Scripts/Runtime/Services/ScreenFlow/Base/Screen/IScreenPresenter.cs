@@ -7,7 +7,13 @@ namespace GameCore.Services.ScreenFlow.Base.Screen
 
     public interface IScreenPresenter : IUIPresenter
     {
-        void SetView(IScreenView view);
+        void    SetView(IScreenView view);
+        UniTask InitView();
+        UniTask OpenViewAsync();
+        UniTask CloseViewAsync();
+        UniTask DestroyViewAsync();
+        void    ShowView();
+        void    HideView();
     }
 
     public interface IScreenPresenter<TModel> : IScreenPresenter, IUIPresenter<TModel>

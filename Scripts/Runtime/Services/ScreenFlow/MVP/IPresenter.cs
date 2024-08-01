@@ -20,15 +20,9 @@ namespace GameCore.Services.ScreenFlow.MVP
         ViewStatus ViewStatus { get; }
         UniTask    BindData();
         void       SetParent(Transform parent);
-        UniTask    InitView();
         void       OpenView();
-        UniTask    OpenViewAsync();
         void       CloseView();
-        UniTask    CloseViewAsync();
         void       DestroyView();
-        UniTask    DestroyViewAsync();
-        void       ShowView();
-        void       HideView();
     }
 
     public interface IUIPresenter<TModel> : IUIPresenter
