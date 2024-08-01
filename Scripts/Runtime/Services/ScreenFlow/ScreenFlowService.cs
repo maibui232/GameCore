@@ -191,7 +191,7 @@ namespace GameCore.Services.ScreenFlow
             await UniTask.WaitUntil(() => this.RootUIView != null);
             var view      = this.RootUIView.GetComponentInChildren<IScreenView>();
             var presenter = await this.GetOrAddScreen<TPresenter>(view);
-            presenter.BindData();
+            await presenter.BindData();
 
             return presenter;
         }
@@ -201,7 +201,7 @@ namespace GameCore.Services.ScreenFlow
             await UniTask.WaitUntil(() => this.RootUIView != null);
             var view      = this.RootUIView.GetComponentInChildren<IScreenView>();
             var presenter = await this.GetOrAddScreen<TPresenter>(view);
-            presenter.BindData(model);
+            await presenter.BindData(model);
 
             return presenter;
         }
@@ -209,7 +209,7 @@ namespace GameCore.Services.ScreenFlow
         public async UniTask<TPresenter> OpenScreenAsync<TPresenter>() where TPresenter : IScreenPresenter
         {
             var presenter = await this.GetOrAddScreen<TPresenter>();
-            presenter.BindData();
+            await presenter.BindData();
 
             return presenter;
         }
@@ -217,7 +217,7 @@ namespace GameCore.Services.ScreenFlow
         public async UniTask<TPresenter> OpenScreenAsync<TPresenter, TModel>(TModel model) where TPresenter : IScreenPresenter<TModel>
         {
             var presenter = await this.GetOrAddScreen<TPresenter>();
-            presenter.BindData(model);
+            await presenter.BindData(model);
 
             return presenter;
         }

@@ -13,8 +13,17 @@ namespace GameCore.Services.ScreenFlow.UIElement
 
         private void Awake()
         {
-            this.introPlayable.stopped += this.OnStop;
-            this.outroPlayable.stopped += this.OnStop;
+            if (this.introPlayable != null)
+            {
+                this.introPlayable.playOnAwake =  false;
+                this.introPlayable.stopped     += this.OnStop;
+            }
+
+            if (this.outroPlayable != null)
+            {
+                this.outroPlayable.playOnAwake =  false;
+                this.outroPlayable.stopped     += this.OnStop;
+            }
         }
 
         private void OnValidate()
@@ -49,8 +58,10 @@ namespace GameCore.Services.ScreenFlow.UIElement
         private UniTask PlayTimeline(PlayableDirector director)
         {
             this.isPlayingTimeline = true;
+
             if (director == null) return UniTask.CompletedTask;
             director.Play();
+
             return UniTask.WaitUntil(() => !this.isPlayingTimeline);
         }
     }
