@@ -9,11 +9,10 @@
   "license": "MIT",
   "category": "Core",
   "dependencies": {
-    "com.cysharp.unitask": "https://github.com/neuecc/UniRx.git?path=Assets/Plugins/UniRx/Scripts",
-    "jp.hadashikick.vcontainer": "https://github.com/hadashiA/VContainer.git?path=VContainer/Assets/VContainer",
-    "com.cysharp.messagepipe" : "https://github.com/Cysharp/MessagePipe.git?path=src/MessagePipe.Unity/Assets/Plugins/MessagePipe",
-    "com.cysharp.messagepipe.vcontainer" : "https://github.com/Cysharp/MessagePipe.git?path=src/MessagePipe.Unity/Assets/Plugins/MessagePipe.VContainer",
-    "com.cysharp.r3" : "https://github.com/GlitchEnzo/NuGetForUnity.git?path=/src/NuGetForUnity",
-    "com.github-glitchenzo.nugetforunity" : "https://github.com/GlitchEnzo/NuGetForUnity.git?path=/src/NuGetForUnity"
+    "com.cysharp.unitask": "2.5.5",
+    "jp.hadashikick.vcontainer": "1.16.2",
+    "com.cysharp.messagepipe" : "1.8.1",
+    "com.cysharp.messagepipe.vcontainer" : "1.8.1",
+    "com.cysharp.r3" : "1.2.2"
   }
 }
