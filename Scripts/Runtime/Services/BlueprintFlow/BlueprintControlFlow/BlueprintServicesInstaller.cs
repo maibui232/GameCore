@@ -1,28 +1,26 @@
 namespace GameCore.Services.BlueprintFlow.BlueprintControlFlow
 {
+    using GameCore.Extensions.VContainer;
+    using GameCore.Extensions.VContainer.Installer;
     using GameCore.Services.BlueprintFlow.APIHandler;
-    using GameCore.Services.BlueprintFlow.BlueprintReader;
     using GameCore.Services.BlueprintFlow.Signals;
+    using VContainer;
 
-    /// <summary>
-    /// Binding all services of the blueprint control flow at here
-    /// </summary>
     public class BlueprintServicesInstaller : Installer<BlueprintServicesInstaller>
     {
-        public override void InstallBindings()
+        public override void InstallBinding(IContainerBuilder builder)
         {
-            //BindBlueprint reader for mobile
-            this.Container.Bind<PreProcessBlueprintMobile>().AsCached().NonLazy();
-            this.Container.Bind<FetchBlueprintInfo>().WhenInjectedInto<BlueprintReaderManager>();
-            this.Container.Bind<BlueprintDownloader>().WhenInjectedInto<BlueprintReaderManager>();
-            this.Container.Bind<BlueprintReaderManager>().AsCached();
-            this.Container.Bind<BlueprintConfig>().FromResolveGetter<GDKConfig>(config => config.GetGameConfig<BlueprintConfig>()).AsCached();
+            builder.Register<PreProcessBlueprintMobile>(Lifetime.Scoped);
+            builder.Register<FetchBlueprintInfo>(Lifetime.Scoped);
+            builder.Register<BlueprintDownloader>(Lifetime.Scoped);
+            builder.Register<BlueprintReaderManager>(Lifetime.Scoped);
+            builder.Register<BlueprintConfig>(Lifetime.Scoped);
 
-            this.Container.BindAllTypeDriveFrom<IGenericBlueprintReader>();
+            // builder.BindAllTypeDriveFrom<IGenericBlueprintReader>();
 
-            this.Container.DeclareSignal<LoadBlueprintDataSucceedSignal>();
-            this.Container.DeclareSignal<LoadBlueprintDataProgressSignal>();
-            this.Container.DeclareSignal<ReadBlueprintProgressSignal>();
+            builder.RegisterMessage<LoadBlueprintDataSucceedMessage>();
+            builder.RegisterMessage<LoadBlueprintDataProgressMessage>();
+            builder.RegisterMessage<ReadBlueprintProgressMessage>();
         }
     }
 }

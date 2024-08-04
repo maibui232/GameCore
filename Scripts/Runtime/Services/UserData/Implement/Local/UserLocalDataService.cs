@@ -33,9 +33,11 @@ namespace GameCore.Services.UserData.Implement.Local
             return this.InternalSave(typeof(T));
         }
 
-        public UniTask Load<T>() where T : IUserData
+        public async UniTask<T> Load<T>() where T : IUserData
         {
-            return this.InternalLoad(typeof(T));
+            await this.InternalLoad(typeof(T));
+
+            return (T)this.typeToLocalDataCache[typeof(T)];
         }
 
         public UniTask SaveAll()

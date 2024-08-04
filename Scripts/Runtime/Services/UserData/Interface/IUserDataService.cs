@@ -5,7 +5,7 @@ namespace GameCore.Services.UserData.Interface
     public interface IUserDataService
     {
         UniTask Save<T>() where T : IUserData;
-        UniTask Load<T>() where T : IUserData;
+        UniTask<T> Load<T>() where T : IUserData;
         UniTask SaveAll();
         UniTask LoadAll();
     }

@@ -4,51 +4,63 @@ namespace GameCore.Services.BlueprintFlow.BlueprintControlFlow
     using System.Collections.Generic;
     using System.IO;
     using System.IO.Compression;
+    using System.Linq;
+    using System.Reflection;
     using Cysharp.Threading.Tasks;
     using GameCore.Services.BlueprintFlow.APIHandler;
     using GameCore.Services.BlueprintFlow.BlueprintReader;
     using GameCore.Services.BlueprintFlow.Signals;
+    using GameCore.Services.Logger;
+    using GameCore.Services.Message;
+    using GameCore.Services.UserData.Interface;
+    using GameExtensions.Reflection;
     using UnityEngine;
+    using VContainer;
 
     /// <summary>
     ///  The main manager for reading blueprints pipeline/>.
     /// </summary>
     public class BlueprintReaderManager
     {
-        #region zeject
+#region zeject
 
-        private readonly SignalBus               signalBus;
-        private readonly ILogService             logService;
-        private readonly DiContainer             diContainer;
-        private readonly IHandleUserDataServices handleUserDataServices;
-        private readonly BlueprintConfig         blueprintConfig;
-        private readonly FetchBlueprintInfo      fetchBlueprintInfo;
-        private readonly BlueprintDownloader     blueprintDownloader;
+        private readonly IMessageService     messageService;
+        private readonly IObjectResolver     resolver;
+        private readonly IUserDataService    userDataServices;
+        private readonly BlueprintConfig     blueprintConfig;
+        private readonly FetchBlueprintInfo  fetchBlueprintInfo;
+        private readonly BlueprintDownloader blueprintDownloader;
 
-        #endregion
+#endregion
 
-        private readonly ReadBlueprintProgressSignal readBlueprintProgressSignal = new();
+        private readonly ReadBlueprintProgressMessage readBlueprintProgressMessage = new();
 
-        public BlueprintReaderManager(SignalBus signalBus, ILogService logService, DiContainer diContainer, IHandleUserDataServices handleUserDataServices, BlueprintConfig blueprintConfig,
-            FetchBlueprintInfo fetchBlueprintInfo, BlueprintDownloader blueprintDownloader)
+        public BlueprintReaderManager
+        (
+            IMessageService     messageService,
+            IObjectResolver     resolver,
+            IUserDataService    userDataServices,
+            BlueprintConfig     blueprintConfig,
+            FetchBlueprintInfo  fetchBlueprintInfo,
+            BlueprintDownloader blueprintDownloader
+        )
         {
-            this.signalBus               = signalBus;
-            this.logService              = logService;
-            this.diContainer             = diContainer;
-            this.handleUserDataServices = handleUserDataServices;
-            this.blueprintConfig         = blueprintConfig;
-            this.fetchBlueprintInfo      = fetchBlueprintInfo;
-            this.blueprintDownloader     = blueprintDownloader;
+            this.messageService      = messageService;
+            this.resolver            = resolver;
+            this.userDataServices    = userDataServices;
+            this.blueprintConfig     = blueprintConfig;
+            this.fetchBlueprintInfo  = fetchBlueprintInfo;
+            this.blueprintDownloader = blueprintDownloader;
         }
 
         public virtual async UniTask LoadBlueprint()
         {
-            this.logService.Log("[BlueprintReader] Start loading");
+            LoggerUtils.Log("[BlueprintReader] Start loading");
             Dictionary<string, string> listRawBlueprints = null;
             if (this.blueprintConfig.IsResourceMode)
             {
                 listRawBlueprints = new Dictionary<string, string>();
-                this.signalBus.Fire(new LoadBlueprintDataProgressSignal {Percent = 1f});
+                this.messageService.Publish(new LoadBlueprintDataProgressMessage { Percent = 1f });
             }
             else
             {
@@ -62,7 +74,7 @@ namespace GameCore.Services.BlueprintFlow.BlueprintControlFlow
                 if (File.Exists(this.blueprintConfig.BlueprintZipFilepath))
                 {
                     // Save blueprint info to local
-                    this.handleUserDataServices.Save(newBlueprintInfo, true);
+                    this.userDataServices.Save<BlueprintInfoData>();
 
                     // Unzip file to memory
 #if !UNITY_WEBGL
@@ -87,29 +99,31 @@ namespace GameCore.Services.BlueprintFlow.BlueprintControlFlow
             }
             catch (Exception e)
             {
-                this.logService.Exception(e);
+                LoggerUtils.Exception(e);
             }
 
-            this.logService.Log("[BlueprintReader] All blueprint are loaded");
+            LoggerUtils.Log("[BlueprintReader] All blueprint are loaded");
 
-            this.signalBus.Fire<LoadBlueprintDataSucceedSignal>();
+            this.messageService.Publish(new LoadBlueprintDataSucceedMessage());
         }
 
-        protected virtual async UniTask<bool> IsCachedBlueprintUpToDate(string url, string hash) =>
-            (await this.handleUserDataServices.Load<BlueprintInfoData>()).Url == url &&
-            MD5Utils.GetMD5HashFromFile(this.blueprintConfig.BlueprintZipFilepath) == hash;
+        protected virtual async UniTask<bool> IsCachedBlueprintUpToDate(string url, string hash)
+        {
+            var blueprintInfoData = await this.userDataServices.Load<BlueprintInfoData>();
 
+            return blueprintInfoData.Url.Equals(url) && MD5Utils.GetMD5HashFromFile(this.blueprintConfig.BlueprintZipFilepath).Equals(hash);
+        }
 
         //Download new blueprints version from remote
         private async UniTask DownloadBlueprint(string blueprintDownloadLink)
         {
-            var progressSignal = new LoadBlueprintDataProgressSignal { Percent = 0f };
-            this.signalBus.Fire(progressSignal); //Inform that we just starting dowloading blueprint
+            var progressSignal = new LoadBlueprintDataProgressMessage { Percent = 0f };
+            this.messageService.Publish(progressSignal); //Inform that we just starting dowloading blueprint
             await this.blueprintDownloader.DownloadBlueprintAsync(blueprintDownloadLink, this.blueprintConfig.BlueprintZipFilepath, (downloaded, length) =>
-            {
-                progressSignal.Percent = downloaded / (float)length * 100f;
-                this.signalBus.Fire(progressSignal);
-            });
+                                                                                                                                    {
+                                                                                                                                        progressSignal.Percent = downloaded / (float)length * 100f;
+                                                                                                                                        this.messageService.Publish(progressSignal);
+                                                                                                                                    });
         }
 
         protected virtual async UniTask<Dictionary<string, string>> UnzipBlueprint()
@@ -137,18 +151,18 @@ namespace GameCore.Services.BlueprintFlow.BlueprintControlFlow
         {
             if (!File.Exists(this.blueprintConfig.BlueprintZipFilepath))
             {
-                this.logService.Warning(
-                    $"[BlueprintReader] {this.blueprintConfig.BlueprintZipFilepath} is not exists!!!, Continue load from resource");
+                LoggerUtils.Warning($"[BlueprintReader] {this.blueprintConfig.BlueprintZipFilepath} is not exists!!!, Continue load from resource");
             }
 
             var listReadTask    = new List<UniTask>();
-            var allDerivedTypes = reflection ReflectionUtils.GetAllDerivedTypes<IGenericBlueprintReader>();
-            this.readBlueprintProgressSignal.MaxBlueprint = allDerivedTypes.Count();
-            this.readBlueprintProgressSignal.CurrentProgress = 0;
-            this.signalBus.Fire(this.readBlueprintProgressSignal); // Inform that we just start reading blueprint
+            var allDerivedTypes = AppDomain.CurrentDomain.GetAllDerivedTypes<IGenericBlueprintReader>();
+
+            this.readBlueprintProgressMessage.MaxBlueprint    = allDerivedTypes.Count();
+            this.readBlueprintProgressMessage.CurrentProgress = 0;
+            this.messageService.Publish(this.readBlueprintProgressMessage); // Inform that we just start reading blueprint
             foreach (var blueprintType in allDerivedTypes)
             {
-                var blueprintInstance = (IGenericBlueprintReader)this.diContainer.Resolve(blueprintType);
+                var blueprintInstance = (IGenericBlueprintReader)this.resolver.Resolve(blueprintType);
                 if (blueprintInstance != null)
                 {
 #if !UNITY_WEBGL
@@ -159,7 +173,7 @@ namespace GameCore.Services.BlueprintFlow.BlueprintControlFlow
                 }
                 else
                 {
-                    this.logService.Log($"Can not resolve blueprint {blueprintType.Name}");
+                    LoggerUtils.Log($"Can not resolve blueprint {blueprintType.Name}");
                 }
             }
 
@@ -168,7 +182,7 @@ namespace GameCore.Services.BlueprintFlow.BlueprintControlFlow
 
         private async UniTask OpenReadBlueprint(IGenericBlueprintReader blueprintReader, Dictionary<string, string> listRawBlueprints)
         {
-            var bpAttribute = blueprintReader.GetCustomAttribute<BlueprintReaderAttribute>();
+            var bpAttribute = blueprintReader.GetType().GetCustomAttribute<BlueprintReaderAttribute>();
             if (bpAttribute != null)
             {
                 if (bpAttribute.BlueprintScope == BlueprintScope.Server) return;
@@ -183,7 +197,7 @@ namespace GameCore.Services.BlueprintFlow.BlueprintControlFlow
                 {
                     if (!listRawBlueprints.TryGetValue(bpAttribute.DataPath + this.blueprintConfig.BlueprintFileType, out rawCsv))
                     {
-                        this.logService.Warning($"[BlueprintReader] Blueprint {bpAttribute.DataPath} is not exists at the local folder, try to load from resource folder");
+                        LoggerUtils.Warning($"[BlueprintReader] Blueprint {bpAttribute.DataPath} is not exists at the local folder, try to load from resource folder");
                         rawCsv = await LoadRawCsvFromResourceFolder();
                     }
                 }
@@ -198,8 +212,8 @@ namespace GameCore.Services.BlueprintFlow.BlueprintControlFlow
                     }
                     catch (Exception e)
                     {
-                        this.logService.Error($"Load {bpAttribute.DataPath} blueprint error!!!");
-                        this.logService.Exception(e);
+                        LoggerUtils.Error($"Load {bpAttribute.DataPath} blueprint error!!!");
+                        LoggerUtils.Exception(e);
                     }
 
 #if !UNITY_WEBGL
@@ -209,22 +223,22 @@ namespace GameCore.Services.BlueprintFlow.BlueprintControlFlow
                 }
 
                 // Deserialize the raw blueprint to the blueprint reader instance
-                
+
                 if (!string.IsNullOrEmpty(rawCsv))
                 {
                     await blueprintReader.DeserializeFromCsv(rawCsv);
-                    lock (this.readBlueprintProgressSignal)
+                    lock (this.readBlueprintProgressMessage)
                     {
-                        this.readBlueprintProgressSignal.CurrentProgress++;
-                        this.signalBus.Fire(this.readBlueprintProgressSignal);
+                        this.readBlueprintProgressMessage.CurrentProgress++;
+                        this.messageService.Publish(this.readBlueprintProgressMessage);
                     }
                 }
                 else
-                    this.logService.Warning($"[BlueprintReader] Unable to load {bpAttribute.DataPath} from {(bpAttribute.IsLoadFromResource ? "resource folder" : "local folder")}!!!");
+                    LoggerUtils.Warning($"[BlueprintReader] Unable to load {bpAttribute.DataPath} from {(bpAttribute.IsLoadFromResource ? "resource folder" : "local folder")}!!!");
             }
             else
             {
-                this.logService.Warning($"[BlueprintReader] Class {blueprintReader} does not have BlueprintReaderAttribute yet");
+                LoggerUtils.Warning($"[BlueprintReader] Class {blueprintReader} does not have BlueprintReaderAttribute yet");
             }
         }
     }
