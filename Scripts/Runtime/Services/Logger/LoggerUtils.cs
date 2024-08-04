@@ -1,5 +1,6 @@
 namespace GameCore.Services.Logger
 {
+    using System;
     using System.Diagnostics;
     using UnityEngine;
     using Debug = UnityEngine.Debug;
@@ -63,6 +64,15 @@ namespace GameCore.Services.Logger
         private static void InternalError(object obj)
         {
             Debug.LogError(obj);
+        }
+
+#endregion
+
+#region Exeption
+
+        public static void Exception(Exception exception)
+        {
+            throw exception;
         }
 
 #endregion

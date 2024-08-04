@@ -11,8 +11,8 @@
   "dependencies": {
     "com.cysharp.unitask": "2.5.5",
     "jp.hadashikick.vcontainer": "1.16.2",
-    "com.cysharp.messagepipe" : "1.8.1",
-    "com.cysharp.messagepipe.vcontainer" : "1.8.1",
-    "com.cysharp.r3" : "1.2.2"
+    "com.cysharp.messagepipe": "1.8.1",
+    "com.cysharp.messagepipe.vcontainer": "1.8.1",
+    "com.cysharp.r3": "1.2.2"
   }
 }
