@@ -9,7 +9,7 @@ namespace GameCore.Services.BlueprintFlow.BlueprintControlFlow
     using Cysharp.Threading.Tasks;
     using GameCore.Services.BlueprintFlow.APIHandler;
     using GameCore.Services.BlueprintFlow.BlueprintReader;
-    using GameCore.Services.BlueprintFlow.Signals;
+    using GameCore.Services.BlueprintFlow.Message;
     using GameCore.Services.Logger;
     using GameCore.Services.Message;
     using GameCore.Services.UserData.Interface;
@@ -33,7 +33,7 @@ namespace GameCore.Services.BlueprintFlow.BlueprintControlFlow
 
 #endregion
 
-        private readonly ReadBlueprintProgressMessage readBlueprintProgressMessage = new();
+        private readonly BlueprintProgressMessage blueprintProgressMessage = new();
 
         public BlueprintReaderManager
         (
@@ -155,11 +155,11 @@ namespace GameCore.Services.BlueprintFlow.BlueprintControlFlow
             }
 
             var listReadTask    = new List<UniTask>();
-            var allDerivedTypes = AppDomain.CurrentDomain.GetAllDerivedTypes<IGenericBlueprintReader>();
+            var allDerivedTypes = AppDomain.CurrentDomain.GetAllTypeFromDerived<IGenericBlueprintReader>();
 
-            this.readBlueprintProgressMessage.MaxBlueprint    = allDerivedTypes.Count();
-            this.readBlueprintProgressMessage.CurrentProgress = 0;
-            this.messageService.Publish(this.readBlueprintProgressMessage); // Inform that we just start reading blueprint
+            this.blueprintProgressMessage.MaxBlueprint    = allDerivedTypes.Count();
+            this.blueprintProgressMessage.CurrentProgress = 0;
+            this.messageService.Publish(this.blueprintProgressMessage); // Inform that we just start reading blueprint
             foreach (var blueprintType in allDerivedTypes)
             {
                 var blueprintInstance = (IGenericBlueprintReader)this.resolver.Resolve(blueprintType);
@@ -227,10 +227,10 @@ namespace GameCore.Services.BlueprintFlow.BlueprintControlFlow
                 if (!string.IsNullOrEmpty(rawCsv))
                 {
                     await blueprintReader.DeserializeFromCsv(rawCsv);
-                    lock (this.readBlueprintProgressMessage)
+                    lock (this.blueprintProgressMessage)
                     {
-                        this.readBlueprintProgressMessage.CurrentProgress++;
-                        this.messageService.Publish(this.readBlueprintProgressMessage);
+                        this.blueprintProgressMessage.CurrentProgress++;
+                        this.messageService.Publish(this.blueprintProgressMessage);
                     }
                 }
                 else

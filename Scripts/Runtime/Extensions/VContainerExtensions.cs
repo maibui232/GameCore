@@ -6,8 +6,10 @@ namespace GameCore.Extensions.VContainer
     using System.Reflection;
     using GameCore.Services.ScreenFlow;
     using GameCore.Services.ScreenFlow.Base.Screen;
+    using GameExtensions.Reflection;
     using global::VContainer;
     using MessagePipe;
+    using UnityEngine;
 
     public static class VContainerExtensions
     {
@@ -41,12 +43,21 @@ namespace GameCore.Extensions.VContainer
                 case 0:
                     return Activator.CreateInstance<T>();
             }
-            
+
             var ctor      = ctors[0];
             var arguments = ctor.GetParameters().Select(param => resolver.Resolve(param.ParameterType)).ToArray();
             var instance  = Activator.CreateInstance(typeof(T), arguments);
-            
+
             return (T)instance;
+        }
+
+        public static void RegisterAllDerivedType<T>(this IContainerBuilder builder, Lifetime lifetime)
+        {
+            var allType = AppDomain.CurrentDomain.GetAllTypeFromDerived(typeof(T));
+            foreach (var type in allType)
+            {
+                builder.Register(type, lifetime);
+            }
         }
     }
 }

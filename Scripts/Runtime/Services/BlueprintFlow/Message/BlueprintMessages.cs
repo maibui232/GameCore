@@ -1,4 +1,4 @@
-namespace GameCore.Services.BlueprintFlow.Signals
+namespace GameCore.Services.BlueprintFlow.Message
 {
     public class LoadBlueprintDataMessage
     {
@@ -20,7 +20,7 @@ namespace GameCore.Services.BlueprintFlow.Signals
         public float Percent { get; set; }
     }
 
-    public class ReadBlueprintProgressMessage : IProgressPercent
+    public class BlueprintProgressMessage : IProgressPercent
     {
         public int MaxBlueprint;
         public int CurrentProgress;
